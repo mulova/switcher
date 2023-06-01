@@ -1,0 +1,5 @@
+<linker>
+        <assembly fullname="mulova.switcher">
+               <type fullname="mulova.switcher.*" preserve="all"/>
+        </assembly>
+</linker>
