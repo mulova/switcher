@@ -237,7 +237,7 @@ namespace mulova.switcher
                 var c = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
                 if (c0.Count != c.Count)
                 {
-                    err.Add($"Component Count Mismatch '{objs[0].name}': {c0.Count - 1} vs '{objs[i].name}': {c.Count - 1}");
+                    err.Add($"Component Count Mismatch\n\t'{objs[0].transform.GetScenePath()}': {c0.Count - 1} vs \n\t'{objs[i].transform.GetScenePath()}': {c.Count - 1}");
                 } else
                 {
                     for (int j=0; j<c.Count; ++j)

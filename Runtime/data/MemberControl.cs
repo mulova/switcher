@@ -10,6 +10,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using System.Reflection;
     using UnityEngine;
+    using UnityEngine.Events;
 
     [UnityEngine.Scripting.Preserve]
     public class MemberControl
@@ -56,6 +57,8 @@ namespace mulova.switcher
         {
             storeIsSetField?.SetValue(store, changed);
         }
+
+        public bool IsTypeOf(Type type) => type.IsAssignableFrom(memberType);
 
         public object GetValue(Component c)
         {

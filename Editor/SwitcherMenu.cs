@@ -116,7 +116,7 @@ namespace mulova.switcher
                 }
                 else
                 {
-                    return "Component Mismatch\n" + string.Join(",", err);
+                    return string.Join("\n", err);
                 }
             }
         }
