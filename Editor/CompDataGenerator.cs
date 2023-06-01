@@ -22,7 +22,7 @@ namespace mulova.switcher
             if (dataType != null)
             {
                 var o = Activator.CreateInstance(dataType) as ICompData;
-                o.Collect(c, rc, r0);
+                o.Collect(c, rc, r0, false);
                 return o;
             }
             else

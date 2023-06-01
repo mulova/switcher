@@ -28,6 +28,7 @@ namespace mulova.switcher
             return new List<Object>(targets).ToArray();
         }
 
+        internal static bool rename = false;
         protected override void OnGUI(SerializedProperty p, Rect bound)
         {
             var uiSwitch = p.serializedObject.targetObject as Switcher;
@@ -35,7 +36,7 @@ namespace mulova.switcher
             var bounds = bound.SplitByHeights(lineHeight);
             var n = p.FindPropertyRelative("name");
             var active = SwitcherInspector.IsActive(n.stringValue);
-            var nameBounds = bounds[0].SplitByWidthsRatio(0.5f, 0.25f, 0.25f);
+            var nameBounds = bounds[0].SplitByWidthsRatio(0.75f, 0.25f);
             var boundsLeft = bounds[1];
             // indentation
             boundsLeft.x += 30;
@@ -47,38 +48,40 @@ namespace mulova.switcher
             }
 
             // Draw Title
-            using (new EnableScope(!string.IsNullOrEmpty(n.stringValue)))
+            if (rename)
             {
-                using (new ColorScope(c))
+                EditorGUI.PropertyField(nameBounds[0], n, new GUIContent(""));
+            } else
+            {
+                using (new EnableScope(!string.IsNullOrEmpty(n.stringValue)))
                 {
-                    if (GUI.Button(nameBounds[0], new GUIContent(n.stringValue)))
+                    using (new ColorScope(c))
                     {
-                        Undo.RecordObjects(GetAllTargets(p), "switch");
-                        bool hasPreset = uiSwitch.preset.Count > 0;
-                        if (!hasPreset)
+                        if (GUI.Button(nameBounds[0], new GUIContent(n.stringValue)))
                         {
-                            SwitcherInspector.SetActive(n.stringValue, n.stringValue);
+                            Undo.RecordObjects(GetAllTargets(p), "switch");
+                            bool hasPreset = uiSwitch.preset.Count > 0;
+                            if (!hasPreset)
+                            {
+                                SwitcherInspector.SetActive(n.stringValue, n.stringValue);
+                            }
+                            else
+                            {
+                                SwitcherInspector.Activate(n.stringValue, !SwitcherInspector.IsActive(n.stringValue));
+                            }
+                            var script = p.serializedObject.targetObject as Switcher;
+                            script.Apply(n.stringValue);
                         }
-                        else
-                        {
-                            SwitcherInspector.Activate(n.stringValue, !SwitcherInspector.IsActive(n.stringValue));
-                        }
-                        var script = p.serializedObject.targetObject as Switcher;
-                        script.Apply(n.stringValue);
                     }
                 }
             }
-            EditorGUI.PropertyField(nameBounds[1], n, new GUIContent(""));
             GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(uiSwitch); // Prevent information lost because collected ICompData.target values are lost when the prefab is applied.
-            if (GUI.Button(nameBounds[2], "Collect"))
+            if (GUI.Button(nameBounds[1], "Collect") && EditorUtility.DisplayDialog("Warning", "Collect and override data from variables/properties?", "Ok", "Cancel"))
             {
                 var targets = GetAllTargets(p);
                 Undo.RecordObjects(targets, "Collect");
-                //p.serializedObject.Update();
-                uiSwitch.Collect(n.stringValue);
+                uiSwitch.Collect(n.stringValue, true);
                 EditorUtil.SetDirty(uiSwitch);
-                //p.serializedObject.ApplyModifiedProperties();
-                //PrefabUtility.RecordPrefabInstancePropertyModifications(uiSwitch);
             }
             GUI.enabled = true;
 

@@ -50,13 +50,16 @@ namespace mulova.switcher
             m.Apply(target, this);
         }
 
-        public virtual void Collect(Component src, Transform rc, Transform r0)
+        public virtual void Collect(Component src, Transform rc, Transform r0, bool changedOnly)
         {
             target = src;
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
-                CollectMember(m, src, rc, r0);
+                if (!changedOnly || m.HasChanged(this))
+                {
+                    CollectMember(m, src, rc, r0);
+                }
             }
         }
 

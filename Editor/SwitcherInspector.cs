@@ -21,7 +21,6 @@ namespace mulova.switcher
         internal static bool showAction { get; set; } = false;
         internal static bool showData { get; set; } = false;
         internal static bool showPreset { get; set; } = false;
-        internal static bool showEnumKey { get; set; } = false;
 
         internal static bool IsPreset(IList<string> actives)
         {
@@ -161,24 +160,19 @@ namespace mulova.switcher
                             showAction = true;
                         }
                     }
-                    if (!showData)
+                    if (GUILayout.Button("Rename"))
                     {
-                        if (GUILayout.Button("Data"))
-                        {
-                            showData = true;
-                        }
+                        SwitchSetDrawer.rename = !SwitchSetDrawer.rename;
+                    }
+                    if (GUILayout.Button("Data"))
+                    {
+                        showData = !showData;
                     }
                     if (hasPreset && !showPreset)
                     {
                         if (GUILayout.Button("Preset"))
                         {
                             showPreset = true;
-                        }
-                    }
-                    {
-                        if (GUILayout.Button("Enum Key"))
-                        {
-                            showEnumKey = true;
                         }
                     }
                 }

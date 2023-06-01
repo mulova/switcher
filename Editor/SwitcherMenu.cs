@@ -22,13 +22,14 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/Switcher/Generate", true, 1101)]
+        [MenuItem("GameObject/UI/Switcher/Generate", true, 101)]
         public static bool IsCreateSwitcher()
         {
             return Selection.gameObjects.Length > 1;
         }
 
-        [MenuItem("GameObject/Switcher/Generate", false, 1101)]
+        private static int runFrame;
+        [MenuItem("GameObject/UI/Switcher/Generate", false, 101)]
         public static void CreateSwitcher()
         {
             var selected = sortedSelection;
@@ -36,9 +37,13 @@ namespace mulova.switcher
             {
                 return;
             }
+            if (runFrame == Time.frameCount)
+            {
+                return;
+            }
+            runFrame = Time.frameCount;
             var rootData = new List<RootData>();
-            var err = CreateSwitcher(selected);
-            if (string.IsNullOrEmpty(err))
+            if (CreateSwitcher(selected))
             {
                 for (int i = 1; i < selected.Count; ++i)
                 {
@@ -52,25 +57,24 @@ namespace mulova.switcher
                 Selection.activeGameObject = selected[0];
             } else
             {
-                Debug.LogError(err);
-                EditorUtility.DisplayDialog("Error", "Check out the log for more detail", "OK");
+                EditorUtility.DisplayDialog("Error", "Check out logs for more detail", "OK");
             }
         }
 
-        [MenuItem("GameObject/Switcher/Spread Out", true, 1102)]
+        [MenuItem("GameObject/UI/Switcher/Spread Out", true, 102)]
         public static bool IsSpreadOut()
         {
             return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>();
         }
 
 
-        [MenuItem("GameObject/Switcher/Spread Out", false, 1102)]
+        [MenuItem("GameObject/UI/Switcher/Spread Out", false, 102)]
         public static void SpreadOut()
         {
             Selection.activeGameObject.GetComponent<Switcher>().SpreadOut();
         }
 
-        [MenuItem("GameObject/Switcher/Merge Switchers", true, 1103)]
+        [MenuItem("GameObject/UI/Switcher/Merge Switchers", true, 103)]
         public static bool IsMergeSwitchers()
         {
             var sel = Selection.gameObjects;
@@ -78,7 +82,7 @@ namespace mulova.switcher
             return sel.Length > 1 && doesAllSelectionHaveSwitcher && DiffExtractor.IsChildrenMatches(sel.ConvertAll(o=>o.transform));
         }
 
-        [MenuItem("GameObject/Switcher/Merge Switchers", false, 1103)]
+        [MenuItem("GameObject/UI/Switcher/Merge Switchers", false, 103)]
         public static void MergeSwitchers()
         {
             var selected = sortedSelection;
@@ -93,12 +97,13 @@ namespace mulova.switcher
             Selection.objects = new[] { selected[0] };
         }
 
-        public static string CreateSwitcher(List<GameObject> roots)
+        public static bool CreateSwitcher(List<GameObject> roots)
         {
             var duplicates = DiffExtractor.GetDuplicateSiblingNames(roots);
             if (duplicates.Count > 0)
             {
-                return "Duplicate sibling names: " + string.Join(",", duplicates);
+                Debug.LogError("Duplicate sibling names: " + string.Join(",", duplicates));
+                return false;
             }
             else
             {
@@ -107,16 +112,14 @@ namespace mulova.switcher
                     var parents = roots.ConvertAll(o => o.transform);
                     DiffExtractor.CreateMissingChildren(parents);
                 }
-                var err = DiffExtractor.GetComponentMismatch(roots.ConvertAll(o => o.transform));
-                if (err.Count == 0)
+                if (DiffExtractor.IsComponentMatch(roots.ConvertAll(o => o.transform)))
                 {
                     Undo.RecordObjects(roots.ToArray(), "Diff");
                     ExtractDiff(roots);
-                    return null;
-                }
-                else
+                    return true;
+                } else
                 {
-                    return string.Join("\n", err);
+                    return false;
                 }
             }
         }

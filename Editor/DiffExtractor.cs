@@ -228,23 +228,27 @@ namespace mulova.switcher
             return true;
         }
 
-        public static List<string> GetComponentMismatch(IList<Transform> objs)
+        public static bool IsComponentMatch(IList<Transform> objs)
         {
-            List<string> err = new List<string>();
+            var passed = true;
             var c0 = objs[0].GetComponents<Component>().FindAll(c=> !(c is Switcher));
             for (int i=1; i<objs.Count; ++i)
             {
-                var c = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
-                if (c0.Count != c.Count)
+                var ci = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
+                if (c0.Count != ci.Count)
                 {
-                    err.Add($"Component Count Mismatch\n\t'{objs[0].transform.GetScenePath()}': {c0.Count - 1} vs \n\t'{objs[i].transform.GetScenePath()}': {c.Count - 1}");
+                    Debug.LogError($"Component Mismatch(1/2): '{objs[0].transform.GetScenePath()}': {c0.Count - 1}", objs[0]);
+                    Debug.LogError($"Component Mismatch(2/2): '{objs[i].transform.GetScenePath()}': {ci.Count - 1}", objs[i]);
+                    passed = false;
                 } else
                 {
-                    for (int j=0; j<c.Count; ++j)
+                    for (int j=0; j<ci.Count; ++j)
                     {
-                        if (c0[j].GetType() != c[j].GetType())
+                        if (c0[j].GetType() != ci[j].GetType())
                         {
-                            err.Add($"{c0[j].name}.{c0[j].GetType().Name} <-> {c[j].name}.{c[j].GetType().Name}");
+                            Debug.LogError($"Type Mismatch(1/2): {c0[j].name}.{c0[j].GetType().Name}", c0[j]);
+                            Debug.LogError($"Type Mismatch(2/2): {ci[j].name}.{ci[j].GetType().Name}", ci[j]);
+                            passed = false;
                         }
                     }
                 }
@@ -256,9 +260,9 @@ namespace mulova.switcher
                 {
                     children.Add(objs[i].GetChild(c));
                 }
-                err.AddRange(GetComponentMismatch(children));
+                passed &= IsComponentMatch(children);
             }
-            return err;
+            return passed;
         }
 
         public static int GetSiblingIndex(string objName, Transform parent)

@@ -89,12 +89,12 @@ namespace mulova.switcher
             }
         }
 
-        public void Collect(string setId)
+        public void Collect(string setId, bool changedOnly)
         {
             var set = switches.Find(s => s.name == setId);
             foreach (var d in set.data)
             {
-                d.Collect(d.target, transform, transform);
+                d.Collect(d.target, transform, transform, changedOnly);
             }
         }
 
