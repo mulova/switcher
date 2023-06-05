@@ -19,8 +19,6 @@ namespace mulova.switcher
         [HideInInspector] public bool color_IsSet;
         [Store] public Material material;
         [HideInInspector] public bool material_IsSet;
-        [Store] public Texture mainTexture;
-        [HideInInspector] public bool mainTexture_IsSet;
         [Store] public Vector4 raycastPadding;
         [HideInInspector] public bool raycastPadding_IsSet;
     }

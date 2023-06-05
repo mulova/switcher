@@ -295,10 +295,10 @@ namespace mulova.switcher
         [ContextMenu("Spread out")]
         public void SpreadOut()
         {
-            SpreadOut(null);
+            SpreadOut(null, true);
         }
 
-        public void SpreadOut(List<RootData> rootData)
+        public void SpreadOut(List<RootData> rootData, bool activate)
         {
             Apply(switches[0].name);
             for (int i = 1; i < switches.Count; ++i)
@@ -306,14 +306,15 @@ namespace mulova.switcher
                 var name = switches[i].name;
                 var clone = Instantiate(this, transform.parent);
                 clone.transform.SetSiblingIndex(transform.GetSiblingIndex() + i);
-                UnityEditor.Undo.RegisterCreatedObjectUndo(clone.gameObject, name);
                 clone.Apply(name);
                 clone.name = name;
+                clone.gameObject.SetActive(activate);
+                UnityEditor.Undo.RegisterCreatedObjectUndo(clone.gameObject, name);
                 if (rootData != null && rootData.Count > i - 1)
                 {
                     rootData[i - 1].ApplyTo(clone.transform);
                 }
-                DestroyImmediate(clone.GetComponent<Switcher>());
+                //DestroyImmediate(clone.GetComponent<Switcher>());
             }
         }
 #endif

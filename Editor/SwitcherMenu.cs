@@ -53,7 +53,7 @@ namespace mulova.switcher
                 {
                     Undo.DestroyObjectImmediate(selected[i]);
                 }
-                selected[0].GetComponent<Switcher>().SpreadOut(rootData);
+                selected[0].GetComponent<Switcher>().SpreadOut(rootData, false);
                 Selection.activeGameObject = selected[0];
             } else
             {
