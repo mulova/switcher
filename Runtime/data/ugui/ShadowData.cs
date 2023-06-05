@@ -7,18 +7,17 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
-    using UnityEngine.Scripting;
     using UnityEngine.UI;
 
-    [Serializable, Preserve]
+    [Serializable]
     public class ShadowData : MonoData<Shadow>
     {
-        [Store, Preserve] public Color effectColor;
-        [HideInInspector, Preserve] public bool effectColor_IsSet;
-        [Store, Preserve] public Vector2 effectDistance;
-        [HideInInspector, Preserve] public bool effectDistance_IsSet;
-        [Store, Preserve] public bool useGraphicAlpha;
-        [HideInInspector, Preserve] public bool useGraphicAlpha_IsSet;
+        [Store] public Color effectColor;
+        [HideInInspector] public bool effectColor_IsSet;
+        [Store] public Vector2 effectDistance;
+        [HideInInspector] public bool effectDistance_IsSet;
+        [Store] public bool useGraphicAlpha;
+        [HideInInspector] public bool useGraphicAlpha_IsSet;
     }
 }
 

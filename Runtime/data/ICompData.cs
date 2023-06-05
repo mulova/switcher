@@ -8,6 +8,7 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
+
     // NOTE: Equals() and GetHashCode() must be implemented
     public interface ICompData
     {

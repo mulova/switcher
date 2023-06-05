@@ -8,16 +8,21 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
-    using UnityEngine.Scripting;
     using UnityEngine.UI;
 
-    [Serializable, Preserve]
+    [Serializable]
     public abstract class GraphicData<G> : MonoData<G> where G : Graphic
     {
-        [Store, Preserve] public bool raycastTarget;
-        [HideInInspector, Preserve] public bool raycastTarget_IsSet;
-        [Store, Preserve] public Color color;
-        [HideInInspector, Preserve] public bool color_IsSet;
+        [Store] public bool raycastTarget;
+        [HideInInspector] public bool raycastTarget_IsSet;
+        [Store] public Color color;
+        [HideInInspector] public bool color_IsSet;
+        [Store] public Material material;
+        [HideInInspector] public bool material_IsSet;
+        [Store] public Texture mainTexture;
+        [HideInInspector] public bool mainTexture_IsSet;
+        [Store] public Vector4 raycastPadding;
+        [HideInInspector] public bool raycastPadding_IsSet;
     }
 }
 

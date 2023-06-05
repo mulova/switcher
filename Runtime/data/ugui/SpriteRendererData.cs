@@ -8,13 +8,30 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
-    using UnityEngine.Scripting;
 
-    [Serializable, Preserve]
+    [Serializable]
     public class SpriteRendererData : MonoData<SpriteRenderer>
     {
-        [Store, Preserve] public Sprite sprite;
-        [HideInInspector, Preserve] public bool sprite_IsSet;
+        [Store] public Sprite sprite;
+        [HideInInspector] public bool sprite_IsSet;
+        [Store] public SpriteDrawMode drawMode;
+        [HideInInspector] public bool drawMode_IsSet;
+        [Store] public Vector2 size;
+        [HideInInspector] public bool size_IsSet;
+        [Store] public float adaptiveModeThreshold;
+        [HideInInspector] public bool adaptiveModeThreshold_IsSet;
+        [Store] public SpriteTileMode tileMode;
+        [HideInInspector] public bool tileMode_IsSet;
+        [Store] public Color color;
+        [HideInInspector] public bool color_IsSet;
+        [Store] public SpriteMaskInteraction maskInteraction;
+        [HideInInspector] public bool maskInteraction_IsSet;
+        [Store] public bool flipX;
+        [HideInInspector] public bool flipX_IsSet;
+        [Store] public bool flipY;
+        [HideInInspector] public bool flipY_IsSet;
+        [Store] public SpriteSortPoint spriteSortPoint;
+        [HideInInspector] public bool spriteSortPoint_IsSet;
     }
 }
 

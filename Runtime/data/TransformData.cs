@@ -8,19 +8,18 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
-    using UnityEngine.Scripting;
 
-    [Serializable, Preserve]
+    [Serializable]
     public class TransformData : CompData
     {
-        [Store, Preserve] public Vector3 localPosition;
-        [HideInInspector, Preserve] public bool localPosition_IsSet;
-        [Store, Preserve] public Quaternion localRotation;
-        [HideInInspector, Preserve] public bool localRotation_IsSet;
-        [Store, Preserve] public Vector3 localScale;
-        [HideInInspector, Preserve] public bool localScale_IsSet;
-        [Store, Preserve] public bool enabled;
-        [HideInInspector, Preserve] public bool enabled_IsSet;
+        [Store] public Vector3 localPosition;
+        [HideInInspector] public bool localPosition_IsSet;
+        [Store] public Quaternion localRotation;
+        [HideInInspector] public bool localRotation_IsSet;
+        [Store] public Vector3 localScale;
+        [HideInInspector] public bool localScale_IsSet;
+        [Store] public bool enabled;
+        [HideInInspector] public bool enabled_IsSet;
 
         [UnityEngine.Serialization.FormerlySerializedAs("trans")]
         [SerializeField] protected Transform _target;

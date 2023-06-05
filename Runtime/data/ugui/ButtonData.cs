@@ -9,14 +9,13 @@ namespace mulova.switcher
     using System;
     using UnityEngine;
     using UnityEngine.Events;
-    using UnityEngine.Scripting;
     using UnityEngine.UI;
 
-    [Serializable, Preserve]
+    [Serializable]
     public class ButtonData : SelectableData<Button>
     {
-        [Store, Preserve] public Button.ButtonClickedEvent onClick;
-        [HideInInspector, Preserve] public bool onClick_IsSet;
+        [Store] public Button.ButtonClickedEvent onClick;
+        [HideInInspector] public bool onClick_IsSet;
 
         protected override void CollectMember(MemberControl m, Component src, Transform rc, Transform r0)
         {

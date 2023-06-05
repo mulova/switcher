@@ -9,22 +9,21 @@ namespace mulova.switcher
     using System;
     using System.Collections.Generic;
     using UnityEngine;
-    using UnityEngine.Scripting;
 
-    [Serializable, Preserve]
+    [Serializable]
     public class RectTransformData : TransformData
     {
         public bool ignoreAnchoredPosition;
-        [Store, Preserve] public Vector2 anchoredPosition;
-        [HideInInspector, Preserve] public bool anchoredPosition_IsSet;
-        [Store, Preserve] public Vector2 anchorMax;
-        [HideInInspector, Preserve] public bool anchorMax_IsSet;
-        [Store, Preserve] public Vector2 anchorMin;
-        [HideInInspector, Preserve] public bool anchorMin_IsSet;
-        [Store, Preserve] public Vector2 pivot;
-        [HideInInspector, Preserve] public bool pivot_IsSet;
-        [Store, Preserve] public Vector2 sizeDelta;
-        [HideInInspector, Preserve] public bool sizeDelta_IsSet;
+        [Store] public Vector2 anchoredPosition;
+        [HideInInspector] public bool anchoredPosition_IsSet;
+        [Store] public Vector2 anchorMax;
+        [HideInInspector] public bool anchorMax_IsSet;
+        [Store] public Vector2 anchorMin;
+        [HideInInspector] public bool anchorMin_IsSet;
+        [Store] public Vector2 pivot;
+        [HideInInspector] public bool pivot_IsSet;
+        [Store] public Vector2 sizeDelta;
+        [HideInInspector] public bool sizeDelta_IsSet;
 
         public RectTransform rect => _target as RectTransform;
         public override Type srcType => typeof(RectTransform);

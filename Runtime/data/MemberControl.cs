@@ -10,7 +10,6 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using System.Reflection;
     using UnityEngine;
-    using UnityEngine.Events;
 
     [UnityEngine.Scripting.Preserve]
     public class MemberControl

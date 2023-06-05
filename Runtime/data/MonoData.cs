@@ -8,13 +8,12 @@ namespace mulova.switcher
 {
     using System;
     using UnityEngine;
-    using UnityEngine.Scripting;
 
-    [Serializable, Preserve]
+    [Serializable]
     public abstract class MonoData<T> : CompData where T: Component
     {
-        [Store, Preserve] public bool enabled;
-        [HideInInspector, Preserve] public bool enabled_IsSet;
+        [Store] public bool enabled;
+        [HideInInspector] public bool enabled_IsSet;
 
         public override bool active => enabled;
         public override Type srcType => typeof(T);
