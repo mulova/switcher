@@ -13,13 +13,9 @@ namespace mulova.switcher
     [CustomEditor(typeof(Switcher)), CanEditMultipleObjects]
     public class SwitcherInspector : Editor
     {
-        private Switcher uiSwitch;
-        internal static bool exclusive = true;
+        private Switcher switcher;
         internal static HashSet<string> activeSet = new HashSet<string>();
-        private bool hasAction;
         private bool hasPreset;
-        internal static bool showAction { get; set; } = false;
-        internal static bool showData { get; set; } = false;
         internal static bool showPreset { get; set; } = false;
 
         internal static bool IsPreset(IList<string> actives)
@@ -66,12 +62,8 @@ namespace mulova.switcher
 
         private void OnEnable()
         {
-            uiSwitch = (Switcher)target;
-
-            hasAction = uiSwitch.switches.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
-            hasPreset = uiSwitch.preset.Count > 0;
-            showAction = false;
-            showData = false;
+            switcher = (Switcher)target;
+            hasPreset = switcher.preset.Count > 0;
             showPreset = false;
         }
 
@@ -92,18 +84,18 @@ namespace mulova.switcher
             {
                 if (hasPreset)
                 {
-                    if (uiSwitch.preset.Count > 0)
+                    if (switcher.preset.Count > 0)
                     {
                         using (new GUILayout.VerticalScope())
                         {
                             GUILayout.Label("Preset");
-                            foreach (var p in uiSwitch.preset)
+                            foreach (var p in switcher.preset)
                             {
                                 using (new ColorScope(Color.green, IsPreset(p.keys)))
                                 {
                                     if (GUILayout.Button(p.presetName, GUILayout.MaxWidth(200)))
                                     {
-                                        uiSwitch.SetPreset(p.presetName);
+                                        switcher.SetPreset(p.presetName);
                                         SetActive(p.keys);
                                     }
                                 }
@@ -115,13 +107,13 @@ namespace mulova.switcher
                 using (new GUILayout.VerticalScope())
                 {
                     GUILayout.Label("Option");
-                    foreach (var s in uiSwitch.switches)
+                    foreach (var s in switcher.switches)
                     {
                         using (new ColorScope(Color.green, IsActive(s.name)))
                         {
                             if (GUILayout.Button(s.name, GUILayout.MaxWidth(200)))
                             {
-                                uiSwitch.Apply(s.name);
+                                switcher.Apply(s.name);
                                 SetActive(s.name);
                             }
                         }
@@ -135,7 +127,7 @@ namespace mulova.switcher
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
-            if (uiSwitch.switches.Count == 0)
+            if (switcher.switches.Count == 0)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.Separator();
@@ -144,30 +136,19 @@ namespace mulova.switcher
                 {
                     EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
                 }
-            } else if (uiSwitch.switches.Count > 0)
+            } else if (switcher.switches.Count > 0)
             {
+                if (GUILayout.Button("Open Compare View"))
+                {
+                    SwitcherCompareWindow.Get();
+                }
+                EditorGUILayout.Separator();
                 if (showPreset)
                 {
                     EditorGUILayout.PropertyField(serializedObject.FindProperty("preset"), true);
                 }
-                EditorGUILayout.Separator();
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (hasAction && !showAction)
-                    {
-                        if (GUILayout.Button("Actions"))
-                        {
-                            showAction = true;
-                        }
-                    }
-                    if (GUILayout.Button("Rename"))
-                    {
-                        SwitchSetDrawer.rename = !SwitchSetDrawer.rename;
-                    }
-                    if (GUILayout.Button("Data"))
-                    {
-                        showData = !showData;
-                    }
                     if (hasPreset && !showPreset)
                     {
                         if (GUILayout.Button("Preset"))
@@ -175,10 +156,6 @@ namespace mulova.switcher
                             showPreset = true;
                         }
                     }
-                }
-                if (GUILayout.Button("Open Compare View"))
-                {
-                    SwitcherCompareWindow.Get();
                 }
             }
         }

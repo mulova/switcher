@@ -31,7 +31,7 @@ namespace mulova.switcher
         internal static bool rename = false;
         protected override void OnGUI(SerializedProperty p, Rect bound)
         {
-            var uiSwitch = p.serializedObject.targetObject as Switcher;
+            var switcher = p.serializedObject.targetObject as Switcher;
             // Draw Name
             var bounds = bound.SplitByHeights(lineHeight);
             var n = p.FindPropertyRelative("name");
@@ -60,7 +60,7 @@ namespace mulova.switcher
                         if (GUI.Button(nameBounds[0], new GUIContent(n.stringValue)))
                         {
                             Undo.RecordObjects(GetAllTargets(p), "switch");
-                            bool hasPreset = uiSwitch.preset.Count > 0;
+                            bool hasPreset = switcher.preset.Count > 0;
                             if (!hasPreset)
                             {
                                 SwitcherInspector.SetActive(n.stringValue, n.stringValue);
@@ -75,18 +75,43 @@ namespace mulova.switcher
                     }
                 }
             }
-            GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(uiSwitch); // Prevent information lost because collected ICompData.target values are lost when the prefab is applied.
-            if (GUI.Button(nameBounds[1], "Collect") && EditorUtility.DisplayDialog("Warning", "Collect and override data from variables/properties?", "Ok", "Cancel"))
+            GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(switcher); // Prevent information lost because collected ICompData.target values are lost when the prefab is applied.
+            if (EditorGUI.DropdownButton(nameBounds[1], new GUIContent("Options"), FocusType.Passive))
             {
-                var targets = GetAllTargets(p);
-                Undo.RecordObjects(targets, "Collect");
-                uiSwitch.Collect(n.stringValue, true);
-                EditorUtil.SetDirty(uiSwitch);
+
+                GenericMenu menu = new GenericMenu();
+                menu.AddItem(new GUIContent("Collect"), false, handleItemClicked, "Collect");
+                menu.AddItem(new GUIContent("Rename"), false, handleItemClicked, "Rename");
+                menu.AddItem(new GUIContent("Actions"), false, handleItemClicked, "Actions");
+                menu.DropDown(nameBounds[1]);
+
+                void handleItemClicked(object o)
+                {
+                    var param = o as string;
+                    switch (param)
+                    {
+                        case "Collect":
+                            if (EditorUtility.DisplayDialog("Warning", "Collect and override data from variables/properties?", "Ok", "Cancel"))
+                            {
+                                var targets = GetAllTargets(p);
+                                Undo.RecordObjects(targets, "Collect");
+                                switcher.Collect(n.stringValue, true);
+                                EditorUtil.SetDirty(switcher);
+                            }
+                            break;
+                        case "Rename":
+                            rename = !rename;
+                            break;
+                        case "Actions":
+                            switcher.showAction = !switcher.showAction;
+                            break;
+                    }
+                }
             }
             GUI.enabled = true;
 
             // Draw Actions
-            if (SwitcherInspector.showAction)
+            if (switcher.showAction)
             {
                 var actionBounds = boundsLeft.SplitByHeights(actionHeight);
                 boundsLeft = actionBounds[1];
@@ -94,15 +119,13 @@ namespace mulova.switcher
                 EditorGUI.PropertyField(actionBounds[0], actionProperty);
             }
 
-            if (SwitcherInspector.showData)
+            if (switcher.showData)
             {
                 // Draw ICompData
                 var dataBounds = boundsLeft.SplitByHeights(dataHeight);
                 boundsLeft = dataBounds[1];
-#if UNITY_2019_1_OR_NEWER
                 var dataProperty = p.FindPropertyRelative("data");
                 EditorGUI.PropertyField(dataBounds[0], dataProperty, true);
-#endif
             }
         }
 
@@ -115,15 +138,13 @@ namespace mulova.switcher
         private int actionHeight;
         public override float GetPropertyHeight(SerializedProperty p, GUIContent label)
         {
-            var uiSwitch = p.serializedObject.targetObject as Switcher;
+            var switcher = p.serializedObject.targetObject as Switcher;
             var separator = 0;
             float height = 0;
 
-#if UNITY_2019_1_OR_NEWER
-            dataHeight = SwitcherInspector.showData ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("data")): 0;
+            dataHeight = switcher.showData ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("data")): 0;
             height += dataHeight;
-#endif
-            actionHeight = SwitcherInspector.showAction ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("action")): 0;
+            actionHeight = switcher.showAction ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("action")): 0;
             height += actionHeight;
 
             height += lineHeight + separator;

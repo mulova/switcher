@@ -42,6 +42,17 @@ namespace mulova.switcher
                 return;
             }
             runFrame = Time.frameCount;
+
+            foreach (var o in selected)
+            {
+                if (PrefabUtility.IsPartOfPrefabInstance(o))
+                {
+                    Debug.LogError("Prefab can be processed under the prefab mode only");
+                    return;
+                }
+            }
+
+
             var rootData = new List<RootData>();
             if (CreateSwitcher(selected))
             {

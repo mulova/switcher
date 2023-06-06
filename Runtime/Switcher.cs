@@ -26,6 +26,13 @@ namespace mulova.switcher
 
         private ILogger log => Debug.unityLogger;
         public List<string> allKeys => switches.ConvertAll(s => s.name);
+        public bool showData { get; set; } = false; // editor only
+        private bool _showAction { get; set; } = false; // editor only
+        public bool showAction { // editor only
+            get => _showAction || hasAction;
+            set => _showAction = value;
+        } 
+        public bool hasAction => switches.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
 
         private void Start()
         {
@@ -291,6 +298,12 @@ namespace mulova.switcher
             return DUMMY;
         }
 
+        public IDisposable NewScope(object startKey, object endKey)
+        {
+            Apply(startKey);
+            return new SwitcherDisposer(this, endKey);
+        }
+
 #if UNITY_EDITOR
         [ContextMenu("Spread out")]
         public void SpreadOut()
@@ -317,14 +330,13 @@ namespace mulova.switcher
                 //DestroyImmediate(clone.GetComponent<Switcher>());
             }
         }
-#endif
-        public IDisposable NewScope(object startKey, object endKey)
+
+        [ContextMenu("Toggle ShowData")]
+        private void ToggleData()
         {
-            Apply(startKey);
-            return new SwitcherDisposer(this, endKey);
+            showData = !showData;
         }
 
-#if UNITY_EDITOR
         private void OnValidate()
         {
             if (!string.IsNullOrWhiteSpace(enumType))
