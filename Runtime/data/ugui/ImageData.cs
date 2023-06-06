@@ -11,7 +11,7 @@ namespace mulova.switcher
     using UnityEngine.UI;
 
     [Serializable]
-    public class ImageData : GraphicData<Image>
+    public class ImageData : MaskableGraphicData<Image>
     {
         [Store] public Sprite sprite;
         [HideInInspector] public bool sprite_IsSet;
@@ -31,8 +31,6 @@ namespace mulova.switcher
         [HideInInspector] public bool useSpriteMesh_IsSet;
         [Store] public bool preserveAspect;
         [HideInInspector] public bool preserveAspect_IsSet;
-        [Store] public bool maskable;
-        [HideInInspector] public bool maskable_IsSet;
     }
 }
 

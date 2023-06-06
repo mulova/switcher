@@ -4,19 +4,17 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
-namespace Studio.Common.Ui
+namespace mulova.switcher
 {
     using System;
-    using mulova.switcher;
-    using TMPro;
     using UnityEngine;
+    using UnityEngine.UI;
 
     [Serializable]
-    public class TextMeshProUGUIData : TMP_TextData
+    public class MaskData : MonoData<Mask>
     {
-        public override Type srcType => typeof(TextMeshProUGUI);
-
-        [Store] public Vector4 maskOffset;
-        [HideInInspector] public bool maskOffset_IsSet;
+        [Store] public bool showMaskGraphic;
+        [HideInInspector] public bool showMaskGraphic_IsSet;
     }
 }
+

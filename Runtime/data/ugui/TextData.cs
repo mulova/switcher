@@ -11,10 +11,8 @@ namespace mulova.switcher
     using UnityEngine.UI;
 
     [Serializable]
-    public class TextData : GraphicData<Text>
+    public class TextData : MaskableGraphicData<Text>
     {
-        [Store] public bool maskable;
-        [HideInInspector] public bool maskable_IsSet;
         [Store] public string text;
         [HideInInspector] public bool text_IsSet;
         [Store] public Font font;

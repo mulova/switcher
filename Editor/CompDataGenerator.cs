@@ -42,8 +42,15 @@ namespace mulova.switcher
                 {
                     if (!t.IsAbstract)
                     {
-                        var ins = Activator.CreateInstance(t) as ICompData;
-                        pool[ins.srcType] = t;
+                        try
+                        {
+                            var ins = Activator.CreateInstance(t) as ICompData;
+                            pool[ins.srcType] = t;
+                        } catch
+                        {
+                            Debug.LogError($"Activator.CreateInstance({t.FullName}) failed.");
+                            throw;
+                        }
                     }
                 }
             }
