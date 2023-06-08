@@ -13,11 +13,11 @@ namespace mulova.switcher
     public class ShadowData : MonoData<Shadow>
     {
         [Store] public Color effectColor;
-        [HideInInspector] public bool effectColor_IsSet;
+        [HideInInspector] public bool effectColor_mod;
         [Store] public Vector2 effectDistance;
-        [HideInInspector] public bool effectDistance_IsSet;
+        [HideInInspector] public bool effectDistance_mod;
         [Store] public bool useGraphicAlpha;
-        [HideInInspector] public bool useGraphicAlpha_IsSet;
+        [HideInInspector] public bool useGraphicAlpha_mod;
     }
 }
 

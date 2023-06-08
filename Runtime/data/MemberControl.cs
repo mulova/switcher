@@ -10,6 +10,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using System.Reflection;
     using UnityEngine;
+    using UnityEngine.Events;
 
     [UnityEngine.Scripting.Preserve]
     public class MemberControl
@@ -23,6 +24,7 @@ namespace mulova.switcher
         public bool isReference => typeof(Component).IsAssignableFrom(storeField.FieldType);
 
         private ILogger log => null;
+        //private ILogger log => Debug.unityLogger;
 
         public Type memberType => storeField.FieldType;
 
@@ -77,7 +79,7 @@ namespace mulova.switcher
                 }
             } catch (Exception ex)
             {
-                log?.LogException(ex);
+                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
                 throw;
             }
         }
@@ -87,21 +89,53 @@ namespace mulova.switcher
             try
             {
                 storeField.SetValue(store, val);
-            } catch
+            } catch (Exception ex)
             {
-                log?.LogFormat(LogType.Error, "{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
-                throw;
+                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
             }
         }
 
-        public void Collect(ICompData store, Component src)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="store"></param>
+        /// <param name="src"></param>
+        /// <param name="rc">root of the current case</param>
+        /// <param name="r0">root of the first case</param>
+        public void Collect(ICompData store, Component src, Transform rc, Transform r0)
         {
             try
             {
-                storeField.SetValue(store, GetValue(src));
+                var val = GetValue(src);
+                if (val != null && rc != r0)
+                {
+                    if (IsTypeOf(typeof(UnityEventBase)))
+                    {
+                        var e = val as UnityEventBase;
+                        e.ReplaceMatchingRoot(rc, r0);
+                    } else if (IsTypeOf(typeof(Component)))
+                    {
+                        var c = val as Component;
+                        var match = GetComponentMatch(c, rc, r0);
+                        if (match != null)
+                        {
+                            val = match;
+                        }
+                    } else if (IsTypeOf(typeof(GameObject)))
+                    {
+                        var o = val as GameObject;
+                        var t = o.transform;
+                        var match = GetTransformMatch(t, rc, r0);
+                        if (match != null)
+                        {
+                            val = match.gameObject;
+                        }
+                    }
+                }
+                SetValue(store, val);
             }
             catch {
-                log?.LogFormat(LogType.Error, "{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
+                Debug.LogErrorFormat("{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
                 throw;
             }
         }
@@ -112,9 +146,9 @@ namespace mulova.switcher
             {
                 return storeField.GetValue(store);
             }
-            catch
+            catch (Exception ex)
             {
-                log?.LogFormat(LogType.Error, "{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
+                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
                 throw;
             }
         }
@@ -154,26 +188,37 @@ namespace mulova.switcher
                 }
             } catch (Exception ex)
             {
-                log?.LogException(ex);
-                throw;
+                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
             }
         }
 
         public override string ToString()
         {
-            return name;
+            return $"{memberType.Name}.{name}";
         }
 
-        public static Transform GetMatchingTransform(Transform t, Transform root, Transform matchingRoot)
+        public static Component GetComponentMatch(Component c, Transform root, Transform targetRoot)
+        {
+            var match = GetTransformMatch(c.transform, root, targetRoot);
+            if (match != null)
+            {
+                return match.GetComponent(c.GetType());
+            } else
+            {
+                return null;
+            }
+        }
+
+        public static Transform GetTransformMatch(Transform t, Transform root, Transform targetRoot)
         {
             var hierarchy = new List<int>();
-            while (t != root)
+            while (t != root && t != null)
             {
                 hierarchy.Add(t.GetSiblingIndex());
                 t = t.parent;
             }
             hierarchy.Reverse();
-            var ret = matchingRoot;
+            var ret = targetRoot;
             foreach (var i in hierarchy)
             {
                 if (i < ret.childCount)
@@ -197,13 +242,13 @@ namespace mulova.switcher
             {
                 return false;
             }
-            else if (t1.parent == t2.parent) // root doesn't need to be the same transform
-            {
-                return true;
-            }
             else if (t1.GetSiblingIndex() != t2.GetSiblingIndex())
             {
                 return false;
+            }
+            else if (t1.parent == t2.parent) // root doesn't need to be the same transform
+            {
+                return true;
             }
             else
             {

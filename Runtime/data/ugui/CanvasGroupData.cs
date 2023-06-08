@@ -13,13 +13,13 @@ namespace mulova.switcher
     public class CanvasGroupData : MonoData<CanvasGroup>
     {
         [Store] public float alpha;
-        [HideInInspector] public bool alpha_IsSet;
+        [HideInInspector] public bool alpha_mod;
         [Store] public bool interactable;
-        [HideInInspector] public bool interactable_IsSet;
+        [HideInInspector] public bool interactable_mod;
         [Store] public bool blocksRaycasts;
-        [HideInInspector] public bool blocksRaycasts_IsSet;
+        [HideInInspector] public bool blocksRaycasts_mod;
         [Store] public bool ignoreParentGroups;
-        [HideInInspector] public bool ignoreParentGroups_IsSet;
+        [HideInInspector] public bool ignoreParentGroups_mod;
     }
 }
 

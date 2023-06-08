@@ -15,15 +15,15 @@ namespace mulova.switcher
     {
         public bool ignoreAnchoredPosition;
         [Store] public Vector2 anchoredPosition;
-        [HideInInspector] public bool anchoredPosition_IsSet;
+        [HideInInspector] public bool anchoredPosition_mod;
         [Store] public Vector2 anchorMax;
-        [HideInInspector] public bool anchorMax_IsSet;
+        [HideInInspector] public bool anchorMax_mod;
         [Store] public Vector2 anchorMin;
-        [HideInInspector] public bool anchorMin_IsSet;
+        [HideInInspector] public bool anchorMin_mod;
         [Store] public Vector2 pivot;
-        [HideInInspector] public bool pivot_IsSet;
+        [HideInInspector] public bool pivot_mod;
         [Store] public Vector2 sizeDelta;
-        [HideInInspector] public bool sizeDelta_IsSet;
+        [HideInInspector] public bool sizeDelta_mod;
 
         public RectTransform rect => _target as RectTransform;
         public override Type srcType => typeof(RectTransform);

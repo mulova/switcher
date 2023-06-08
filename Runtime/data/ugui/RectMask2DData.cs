@@ -14,9 +14,9 @@ namespace mulova.switcher
     public class RectMask2DData : MonoData<RectMask2D>
     {
         [Store] public Vector4 padding;
-        [HideInInspector] public bool padding_IsSet;
+        [HideInInspector] public bool padding_mod;
         [Store] public Vector2Int softness;
-        [HideInInspector] public bool softness_IsSet;
+        [HideInInspector] public bool softness_mod;
     }
 }
 

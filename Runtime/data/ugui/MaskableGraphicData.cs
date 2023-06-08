@@ -14,9 +14,9 @@ namespace mulova.switcher
     public abstract class MaskableGraphicData<G> : GraphicData<G> where G : MaskableGraphic
     {
         [Store] public bool isMaskingGraphic;
-        [HideInInspector] public bool isMaskingGraphic_IsSet;
+        [HideInInspector] public bool isMaskingGraphic_mod;
         [Store] public bool maskable;
-        [HideInInspector] public bool maskable_IsSet;
+        [HideInInspector] public bool maskable_mod;
     }
 }
 

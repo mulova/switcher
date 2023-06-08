@@ -15,11 +15,11 @@ namespace mulova.switcher
     public class GraphicRaycasterData : MonoData<GraphicRaycaster>
     {
         [Store] public LayerMask blockingMask;
-        [HideInInspector] public bool blockingMask_IsSet;
+        [HideInInspector] public bool blockingMask_mod;
         [Store] public bool ignoreReversedGraphics;
-        [HideInInspector] public bool ignoreReversedGraphics_IsSet;
+        [HideInInspector] public bool ignoreReversedGraphics_mod;
         [Store] public BlockingObjects blockingObjects;
-        [HideInInspector] public bool blockingObjects_IsSet;
+        [HideInInspector] public bool blockingObjects_mod;
     }
 }
 

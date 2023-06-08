@@ -12,7 +12,7 @@ namespace mulova.switcher
 
     public static class UnityEventEx
     {
-        public static object GetPersistentCall(this UnityEvent e, int i)
+        public static object GetPersistentCall(this UnityEventBase e, int i)
         {
             var calls = typeof(UnityEventBase).GetField("m_PersistentCalls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var m_PersistentCalls = calls.GetValue(e);
@@ -20,7 +20,7 @@ namespace mulova.switcher
             return listener;
         }
 
-        public static void SetPersistentTarget(object call, int i, Component target)
+        public static void SetPersistentTarget(object call, Component target)
         {
             call.GetType().GetField("m_Target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(call, target);
         }
@@ -62,6 +62,72 @@ namespace mulova.switcher
         public static object GetArgument(object call)
         {
             return call.GetType().GetField("m_Arguments", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(call);
+        }
+
+        public static bool PersistentEventEquals(this UnityEventBase u1, UnityEventBase u2)
+        {
+            if (u2 == null)
+            {
+                return false;
+            }
+            if (u1.GetPersistentEventCount() != u2.GetPersistentEventCount())
+            {
+                return false;
+            }
+            for (int i = 0; i < u1.GetPersistentEventCount(); ++i)
+            {
+                if (u1.GetPersistentMethodName(i) != u2.GetPersistentMethodName(i))
+                {
+                    return false;
+                }
+                var t1 = u1.GetPersistentTarget(i) as Component;
+                var t2 = u2.GetPersistentTarget(i) as Component;
+                if (t1 != t2)
+                {
+                    if (t1 != null ^ t2 != null)
+                    {
+                        return false;
+                    }
+                    if (t1 != null && (t1.GetType() != t2.GetType() || t1.name != t2.name || !MemberControl.IsHierarchyMatch(t1.transform, t2.transform)))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // check arguments
+                    var call0 = u1.GetPersistentCall(i);
+                    var calli = u2.GetPersistentCall(i);
+                    if (!IsArgumentEquals(call0, calli))
+                    {
+                        return false;
+                    }
+
+                }
+            }
+            return true;
+        }
+
+        public static void ReplaceMatchingRoot(this UnityEventBase evt, Transform root, Transform matchingRoot)
+        {
+            if (matchingRoot == root)
+            {
+                return;
+            }
+            for (int i = 0; i < evt.GetPersistentEventCount(); ++i)
+            {
+                var target = evt.GetPersistentTarget(i) as Component;
+                if (target != null && (target.transform == root || target.transform.IsChildOf(root)))
+                {
+                    // m_PersistentCalls.GetListener (index)?.target
+                    object call = evt.GetPersistentCall(i);
+                    var match = MemberControl.GetComponentMatch(target, root, matchingRoot);
+                    if (match != null)
+                    {
+                        SetPersistentTarget(call, match);
+                    }
+                }
+            }
         }
     }
 

@@ -14,13 +14,13 @@ namespace mulova.switcher
     public abstract class GraphicData<G> : MonoData<G> where G : Graphic
     {
         [Store] public bool raycastTarget;
-        [HideInInspector] public bool raycastTarget_IsSet;
+        [HideInInspector] public bool raycastTarget_mod;
         [Store] public Color color;
-        [HideInInspector] public bool color_IsSet;
+        [HideInInspector] public bool color_mod;
         [Store] public Material material;
-        [HideInInspector] public bool material_IsSet;
+        [HideInInspector] public bool material_mod;
         [Store] public Vector4 raycastPadding;
-        [HideInInspector] public bool raycastPadding_IsSet;
+        [HideInInspector] public bool raycastPadding_mod;
     }
 }
 

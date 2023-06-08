@@ -107,7 +107,7 @@ namespace mulova.switcher
                 using (new GUILayout.VerticalScope())
                 {
                     GUILayout.Label("Option");
-                    foreach (var s in switcher.switches)
+                    foreach (var s in switcher.cases)
                     {
                         using (new ColorScope(Color.green, IsActive(s.name)))
                         {
@@ -127,7 +127,7 @@ namespace mulova.switcher
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
-            if (switcher.switches.Count == 0)
+            if (switcher.cases.Count == 0)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.Separator();
@@ -136,7 +136,7 @@ namespace mulova.switcher
                 {
                     EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
                 }
-            } else if (switcher.switches.Count > 0)
+            } else if (switcher.cases.Count > 0)
             {
                 if (GUILayout.Button("Open Compare View"))
                 {

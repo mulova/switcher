@@ -126,11 +126,23 @@ namespace mulova.switcher
                 if (DiffExtractor.IsComponentMatch(roots.ConvertAll(o => o.transform)))
                 {
                     Undo.RecordObjects(roots.ToArray(), "Diff");
+                    MakeRootsActive(roots);
                     ExtractDiff(roots);
                     return true;
                 } else
                 {
                     return false;
+                }
+            }
+
+            static void MakeRootsActive(IEnumerable<GameObject> roots)
+            {
+                foreach (var r in roots)
+                {
+                    if (!r.activeSelf)
+                    {
+                        r.SetActive(true);
+                    }
                 }
             }
         }
@@ -141,19 +153,14 @@ namespace mulova.switcher
             var root0 = roots[0];
             var diffs = DiffExtractor.CreateDiff(roots.ToArray());
             var tDiffs = DiffExtractor.FindAll<TransformData>(diffs);
-            // remove TransformData from diffs
-            //for (int i = 0; i < diffs.Length; ++i)
-            //{
-            //    diffs[i] = diffs[i].FindAll(d => !(d.GetType() == typeof(TransformData)));
-            //}
 
             var switcher = root0.GetComponent<Switcher>();
             string firstId = null;
             if (switcher != null)
             {
-                if (switcher.switches.Count > 0)
+                if (switcher.cases.Count > 0)
                 {
-                    firstId = switcher.switches[0].name;
+                    firstId = switcher.cases[0].name;
                 }
                 switcher.Clear();
             } else
@@ -207,12 +214,12 @@ namespace mulova.switcher
 
             for (int i = 0; i < roots.Count; ++i)
             {
-                var s = new SwitchSet();
-                s.name = i == 0 && firstId != null? firstId: roots[i].name;
+                var c = new Case();
+                c.name = i == 0 && firstId != null? firstId: roots[i].name;
 #if UNITY_2019_1_OR_NEWER
-                s.data = diffs[i];
+                c.data = diffs[i];
 #endif
-                switcher.switches.Add(s);
+                switcher.cases.Add(c);
             }
             EditorUtility.SetDirty(switcher);
             //diffList.serializedProperty.ClearArray();

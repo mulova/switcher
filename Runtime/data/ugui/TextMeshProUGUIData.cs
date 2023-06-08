@@ -17,6 +17,6 @@ namespace Studio.Common.Ui
         public override Type srcType => typeof(TextMeshProUGUI);
 
         [Store] public Vector4 maskOffset;
-        [HideInInspector] public bool maskOffset_IsSet;
+        [HideInInspector] public bool maskOffset_mod;
     }
 }

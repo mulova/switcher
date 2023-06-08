@@ -27,6 +27,10 @@ namespace mulova.switcher
 
         public override void OnSelectionChange()
         {
+            if (Selection.activeGameObject == null)
+            {
+                return;
+            }
             var s = Selection.activeGameObject.GetComponent<Switcher>();
             if (s != null)
             {
@@ -44,7 +48,7 @@ namespace mulova.switcher
                     setIndex = EditorGUILayout.Popup(setIndex, switcher.allKeys.ToArray());
                     if (GUILayout.Button("Apply"))
                     {
-                        switcher.Apply(switcher.switches[setIndex].name);
+                        switcher.Apply(switcher.cases[setIndex].name);
                     }
                 }
             }
@@ -52,12 +56,12 @@ namespace mulova.switcher
 
         public override void OnInspectorGUI()
         {
-            if (switcher == null || setIndex >= switcher.switches.Count)
+            if (switcher == null || setIndex >= switcher.cases.Count)
             {
                 return;
             }
             so.Update();
-            var set = switcher.switches[setIndex];
+            var set = switcher.cases[setIndex];
             using (new EditorGUILayout.VerticalScope())
             {
                 var deleteIndex = -1;
@@ -81,7 +85,7 @@ namespace mulova.switcher
                             {
                                 using (new EditorGUILayout.HorizontalScope())
                                 {
-                                    var p = so.FindProperty($"switches.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
+                                    var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
                                     EditorGUILayout.PropertyField(p);
                                     if (GUILayout.Button("-", GUILayout.Width(20)))
                                     {
@@ -90,9 +94,9 @@ namespace mulova.switcher
                                             deleteIndex = i;
                                         } else
                                         {
-                                            for (int s=0; s<switcher.switches.Count; ++s)
+                                            for (int s=0; s<switcher.cases.Count; ++s)
                                             {
-                                                var isSet = so.FindProperty($"switches.Array.data[{s}].data.Array.data[{i}].{m.name}{CompData.IS_SET_SUFFIX}");
+                                                var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{CompData.MOD_SUFFIX}");
                                                 if (isSet != null)
                                                 {
                                                     isSet.boolValue = false;
@@ -113,9 +117,9 @@ namespace mulova.switcher
 
                 if (deleteIndex >= 0)
                 {
-                    for (int i = 0; i < switcher.switches.Count; ++i)
+                    for (int i = 0; i < switcher.cases.Count; ++i)
                     {
-                        switcher.switches[i].data.RemoveAt(deleteIndex);
+                        switcher.cases[i].data.RemoveAt(deleteIndex);
                         EditorUtility.SetDirty(switcher);
                     }
                 }

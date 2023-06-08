@@ -14,7 +14,7 @@ namespace mulova.switcher
     public class MaskData : MonoData<Mask>
     {
         [Store] public bool showMaskGraphic;
-        [HideInInspector] public bool showMaskGraphic_IsSet;
+        [HideInInspector] public bool showMaskGraphic_mod;
     }
 }
 

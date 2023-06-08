@@ -11,8 +11,8 @@ using Object = UnityEngine.Object;
 
 namespace mulova.switcher
 {
-    [CustomPropertyDrawer(typeof(SwitchSet))]
-    public class SwitchSetDrawer : PropertyDrawerBase
+    [CustomPropertyDrawer(typeof(Case))]
+    public class CaseDrawer : PropertyDrawerBase
     {
         public static readonly Color SelectedColor = Color.green;
 
@@ -20,7 +20,7 @@ namespace mulova.switcher
         {
             var switcher = p.serializedObject.targetObject as Switcher;
             HashSet<Object> targets = new HashSet<Object>();
-            foreach (var d in switcher.switches[0].data)
+            foreach (var d in switcher.cases[0].data)
             {
                 //targets.Add(d.target);
                 targets.Add(d.target.gameObject);

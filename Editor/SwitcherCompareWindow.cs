@@ -29,7 +29,7 @@ namespace mulova.switcher
                 return;
             }
             var s = Selection.activeGameObject.GetComponent<Switcher>();
-            var max = s?.switches.Count ?? 2;
+            var max = s?.cases.Count ?? 2;
             if (max > 2)
             {
                 var count = EditorGUILayout.IntSlider(compareCount, 2, max);

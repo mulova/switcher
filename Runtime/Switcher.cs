@@ -15,28 +15,28 @@ namespace mulova.switcher
 
     public class Switcher : MonoBehaviour
     {
-        public List<SwitchSet> switches = new List<SwitchSet>();
+        public List<Case> cases = new List<Case>();
         [SerializeField, HideInInspector] public List<SwitchPreset> preset = new List<SwitchPreset>();
         [SerializeField, EnumType] private string enumType = "";
         public bool caseSensitive = true;
 
-        private SwitchSet DUMMY = new SwitchSet();
+        private Case DUMMY = new Case();
         private HashSet<string> keySet = new HashSet<string>();
         public ICollection<string> keys => keySet;
 
         private ILogger log => Debug.unityLogger;
-        public List<string> allKeys => switches.ConvertAll(s => s.name);
+        public List<string> allKeys => cases.ConvertAll(s => s.name);
         public bool showData { get; set; } = false; // editor only
         private bool _showAction { get; set; } = false; // editor only
         public bool showAction { // editor only
             get => _showAction || hasAction;
             set => _showAction = value;
         } 
-        public bool hasAction => switches.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
+        public bool hasAction => cases.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
 
         private void Start()
         {
-            if (switches.Count > 0 && keySet.Count == 0)
+            if (cases.Count > 0 && keySet.Count == 0)
             {
                 Apply(0);
             }
@@ -98,7 +98,7 @@ namespace mulova.switcher
 
         public void Collect(string setId, bool changedOnly)
         {
-            var set = switches.Find(s => s.name == setId);
+            var set = cases.Find(s => s.name == setId);
             foreach (var d in set.data)
             {
                 d.Collect(d.target, transform, transform, changedOnly);
@@ -137,11 +137,11 @@ namespace mulova.switcher
         public void SetAction(object key, UnityAction action)
         {
             string k = NormalizeKey(key);
-            SwitchSet s = switches.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
-            if (s.isValid)
+            Case c = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
+            if (c.isValid)
             {
-                s.action.RemoveAllListeners();
-                s.action.AddListener(action);
+                c.action.RemoveAllListeners();
+                c.action.AddListener(action);
             }
             else
             {
@@ -152,7 +152,7 @@ namespace mulova.switcher
         public void AddAction(object key, UnityAction action)
         {
             string k = NormalizeKey(key);
-            SwitchSet s = switches.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
+            Case s = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
             if (s.isValid)
             {
                 s.action.AddListener(action);
@@ -166,9 +166,9 @@ namespace mulova.switcher
         public void Merge(Switcher merged)
         {
             // Replace components
-            foreach (var s in merged.switches)
+            foreach (var c in merged.cases)
             {
-                var clone = s.Clone() as SwitchSet;
+                var clone = c.Clone() as Case;
 #if UNITY_2019_1_OR_NEWER
                 for (int i = 0; i < clone.data.Count; ++i)
                 {
@@ -176,7 +176,7 @@ namespace mulova.switcher
                     clone.data[i].target = GetMatchingComponent(clone.data[i].target, matching);
                 }
 #endif
-                switches.Add(clone);
+                cases.Add(clone);
             }
         }
 
@@ -207,13 +207,13 @@ namespace mulova.switcher
 
         private string NormalizeKey(object o)
         {
-            var key = o is int ? switches[(int)o].name : o.ToString();
+            var key = o is int ? cases[(int)o].name : o.ToString();
             return caseSensitive ? key : key.ToLower();
         }
 
         public void Clear()
         {
-            switches.Clear();
+            cases.Clear();
             keySet.Clear();
         }
 
@@ -235,15 +235,15 @@ namespace mulova.switcher
         public void Apply()
         {
             int match = 0;
-            foreach (SwitchSet s in switches)
+            foreach (Case c in cases)
             {
-                if (keySet.Contains(NormalizeKey(s.name)))
+                if (keySet.Contains(NormalizeKey(c.name)))
                 {
                     match++;
                     try
                     {
 #if UNITY_2019_1_OR_NEWER
-                        foreach (var d in s.data)
+                        foreach (var d in c.data)
                         {
 #if UNITY_EDITOR
                             if (!Application.isPlaying)
@@ -266,11 +266,11 @@ namespace mulova.switcher
 #endif
                         }
 #endif
-                        s.action?.Invoke();
+                        c.action?.Invoke();
                     }
                     catch (Exception ex)
                     {
-                        log.LogFormat(LogType.Error, "{0}({1})n{2}", s.name, name, ex);
+                        log.LogFormat(LogType.Error, "{0}({1})n{2}", c.name, name, ex);
                     }
                 }
             }
@@ -285,14 +285,14 @@ namespace mulova.switcher
             }
         }
 
-        private SwitchSet GetSlot(object key)
+        private Case GetSlot(object key)
         {
             string id = NormalizeKey(key);
-            foreach (SwitchSet e in switches)
+            foreach (Case c in cases)
             {
-                if (e.name.Equals(id, StringComparison.OrdinalIgnoreCase))
+                if (c.name.Equals(id, StringComparison.OrdinalIgnoreCase))
                 {
-                    return e;
+                    return c;
                 }
             }
             return DUMMY;
@@ -313,14 +313,14 @@ namespace mulova.switcher
 
         public void SpreadOut(List<RootData> rootData, bool activate)
         {
-            Apply(switches[0].name);
-            for (int i = 1; i < switches.Count; ++i)
+            Apply(cases[0].name);
+            for (int i = 1; i < cases.Count; ++i)
             {
-                var name = switches[i].name;
+                var name = cases[i].name;
                 var clone = Instantiate(this, transform.parent);
+                clone.name = name;
                 clone.transform.SetSiblingIndex(transform.GetSiblingIndex() + i);
                 clone.Apply(name);
-                clone.name = name;
                 clone.gameObject.SetActive(activate);
                 UnityEditor.Undo.RegisterCreatedObjectUndo(clone.gameObject, name);
                 if (rootData != null && rootData.Count > i - 1)

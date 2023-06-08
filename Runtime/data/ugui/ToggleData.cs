@@ -15,15 +15,15 @@ namespace mulova.switcher
     public class ToggleData : SelectableData<Toggle>
     {
         [Store] public Graphic graphic;
-        [HideInInspector] public bool graphic_IsSet;
+        [HideInInspector] public bool graphic_mod;
         [Store] public ToggleGroup group;
-        [HideInInspector] public bool group_IsSet;
+        [HideInInspector] public bool group_mod;
         [Store] public bool isOn;
-        [HideInInspector] public bool isOn_IsSet;
+        [HideInInspector] public bool isOn_mod;
         [Store] public ToggleEvent onValueChanged;
-        [HideInInspector] public bool onValueChanged_IsSet;
+        [HideInInspector] public bool onValueChanged_mod;
         [Store] public ToggleTransition toggleTransition;
-        [HideInInspector] public bool toggleTransition_IsSet;
+        [HideInInspector] public bool toggleTransition_mod;
     }
 }
 

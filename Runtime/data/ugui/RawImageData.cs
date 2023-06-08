@@ -14,9 +14,9 @@ namespace mulova.switcher
     public class RawImageData : MaskableGraphicData<RawImage>
     {
         [Store] public Texture texture;
-        [HideInInspector] public bool texture_IsSet;
+        [HideInInspector] public bool texture_mod;
         [Store] public Rect uvRect;
-        [HideInInspector] public bool uvRect_IsSet;
+        [HideInInspector] public bool uvRect_mod;
     }
 }
 

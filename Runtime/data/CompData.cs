@@ -11,11 +11,12 @@ namespace mulova.switcher
     using System.Linq;
     using System.Reflection;
     using UnityEngine;
+    using UnityEngine.Events;
 
     [Serializable, UnityEngine.Scripting.Preserve]
     public abstract class CompData : ICompData
     {
-        public const string IS_SET_SUFFIX = "_IsSet";
+        public const string MOD_SUFFIX = "_mod";
         public static readonly BindingFlags INSTANCE_FLAGS = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
         public static readonly BindingFlags FIELD_FLAG = INSTANCE_FLAGS & ~BindingFlags.SetProperty & ~BindingFlags.GetProperty;
         public static readonly BindingFlags PROPERTY_FLAG = INSTANCE_FLAGS & ~BindingFlags.GetField & ~BindingFlags.SetField;
@@ -72,7 +73,7 @@ namespace mulova.switcher
         /// <param name="ri">the i th root</param>
         protected virtual void CollectMember(MemberControl m, Component c, Transform rc, Transform r0)
         {
-            m.Collect(this, c);
+            m.Collect(this, c, rc, r0);
         }
 
         public override bool Equals(object obj)
@@ -96,27 +97,34 @@ namespace mulova.switcher
             return true;
         }
 
-        public virtual bool MemberEquals(MemberControl m, object val0, object vali)
+        public virtual bool MemberEquals(MemberControl m, object v0, object v1)
         {
-            if (val0 != null)
+            if (v0 != null)
             {
-                switch (val0)
+                switch (v0)
                 {
                     case float f0:
-                        var f1 = (float)vali;
+                        var f1 = (float)v1;
                         return Mathf.Abs(f1 - f0) <= Mathf.Epsilon;
                     case Vector2 v20:
-                        var v21 = (Vector2)vali;
+                        var v21 = (Vector2)v1;
                         return v20.ApproximatelyEquals(v21);
                     case Vector3 v30:
-                        var v31 = (Vector3)vali;
+                        var v31 = (Vector3)v1;
                         return v30.ApproximatelyEquals(v31);
                     case Vector4 v40:
-                        var v41 = (Vector4)vali;
+                        var v41 = (Vector4)v1;
                         return v40.ApproximatelyEquals(v41);
+                    case UnityEventBase u0:
+                        {
+                            var u1 = v1 as UnityEventBase;
+                            return u0.PersistentEventEquals(u1);
+                        }
+                    default:
+                        return v0.Equals(v1);
                 }
             }
-            return val0.Equals(vali);
+            return v0 == v1;
         }
 
         public override int GetHashCode()
@@ -126,7 +134,7 @@ namespace mulova.switcher
 
         public override string ToString()
         {
-            return target != null ? target.name : null;
+            return target != null ? target.ToString() : null;
         }
 
         /// <summary>
@@ -175,7 +183,7 @@ namespace mulova.switcher
                     var a = f.GetCustomAttribute<StoreAttribute>();
                     if (a != null)
                     {
-                        var isSetField = storeType.GetField(f.Name + IS_SET_SUFFIX, FIELD_FLAG);
+                        var isSetField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
                         if (isSetField != null && isSetField.FieldType == typeof(bool))
                         {
                             var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
@@ -186,7 +194,7 @@ namespace mulova.switcher
                             var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
                             var slot = new MemberControl(f, isSetField, member.FirstOrDefault());
                             list.Add(slot);
-                            log?.LogFormat(LogType.Log, "{0}.{1}_IsSet field is missing", f.DeclaringType.Name, f.Name);
+                            log?.LogFormat(LogType.Log, "{0}.{1}_mod field is missing", f.DeclaringType.Name, f.Name);
                         }
                     }
                 }

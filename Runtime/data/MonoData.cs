@@ -13,7 +13,7 @@ namespace mulova.switcher
     public abstract class MonoData<T> : CompData where T: Component
     {
         [Store] public bool enabled;
-        [HideInInspector] public bool enabled_IsSet;
+        [HideInInspector] public bool enabled_mod;
 
         public override bool active => enabled;
         public override Type srcType => typeof(T);
@@ -27,7 +27,7 @@ namespace mulova.switcher
 
         public override string ToString()
         {
-            return target != null ? target.name : null;
+            return target != null ? target.ToString() : null;
         }
     }
 }

@@ -15,32 +15,33 @@ namespace mulova.switcher
     public abstract class SelectableData<S> : MonoData<S> where S : Selectable
     {
         [Store] public bool interactable;
-        [HideInInspector] public bool interactable_IsSet;
+        [HideInInspector] public bool interactable_mod;
         [Store] public Transition transition;
-        [HideInInspector] public bool transition_IsSet;
+        [HideInInspector] public bool transition_mod;
         [Store] public Navigation navigation;
-        [HideInInspector] public bool navigation_IsSet;
+        [HideInInspector] public bool navigation_mod;
         [Store] public Graphic targetGraphic;
-        [HideInInspector] public bool targetGraphic_IsSet;
+        [HideInInspector] public bool targetGraphic_mod;
         [Store] public ColorBlock colors;
-        [HideInInspector] public bool colors_IsSet;
+        [HideInInspector] public bool colors_mod;
         [Store] public SpriteState spriteState;
-        [HideInInspector] public bool spriteState_IsSet;
+        [HideInInspector] public bool spriteState_mod;
         [Store] public AnimationTriggers animationTriggers;
-        [HideInInspector] public bool animationTriggers_IsSet;
+        [HideInInspector] public bool animationTriggers_mod;
 
         public override bool MemberEquals(MemberControl m, object val1, object val2)
         {
-            if (m.memberType == typeof(AnimationTriggers))
+            if (m.IsTypeOf(typeof(AnimationTriggers)))
             {
                 return TriggerEquals(val1 as AnimationTriggers, val2 as AnimationTriggers);
-            } else
+            }
+            else
             {
                 return base.MemberEquals(m, val1, val2);
             }
         }
 
-        private bool TriggerEquals(AnimationTriggers t1, AnimationTriggers t2)
+        public static bool TriggerEquals(AnimationTriggers t1, AnimationTriggers t2)
         {
             if (t1 == t2)
             {

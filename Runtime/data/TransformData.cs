@@ -13,13 +13,13 @@ namespace mulova.switcher
     public class TransformData : CompData
     {
         [Store] public Vector3 localPosition;
-        [HideInInspector] public bool localPosition_IsSet;
+        [HideInInspector] public bool localPosition_mod;
         [Store] public Quaternion localRotation;
-        [HideInInspector] public bool localRotation_IsSet;
+        [HideInInspector] public bool localRotation_mod;
         [Store] public Vector3 localScale;
-        [HideInInspector] public bool localScale_IsSet;
+        [HideInInspector] public bool localScale_mod;
         [Store] public bool enabled;
-        [HideInInspector] public bool enabled_IsSet;
+        [HideInInspector] public bool enabled_mod;
 
         [UnityEngine.Serialization.FormerlySerializedAs("trans")]
         [SerializeField] protected Transform _target;
