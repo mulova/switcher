@@ -11,6 +11,7 @@ namespace mulova.switcher
     using System.Linq;
     using System.Reflection;
     using UnityEngine;
+    using UnityEngine.Assertions;
     using UnityEngine.Events;
 
     [UnityEngine.Scripting.Preserve]
@@ -286,18 +287,38 @@ namespace mulova.switcher
                     if (a != null)
                     {
                         var isModField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
-                        if (isModField != null && isModField.FieldType == typeof(bool))
+                        if (isModField == null)
                         {
-                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
-                            var slot = new MemberControl(f, isModField, member.FirstOrDefault());
-                            list.Add(slot);
+                            Debug.LogErrorFormat("{0}.{1}{2} field is missing", f.DeclaringType.FullName, f.Name, MOD_SUFFIX);
                         }
-                        else
+#if UNITY_EDITOR
+                        if (!Application.isPlaying && isModField != null)
+                        {
+                            if (isModField.FieldType != typeof(bool))
+                            {
+                                throw new MissingFieldException($"Type of '{f.DeclaringType.FullName}.{f.Name}' is not bool");
+                            }
+                            if (isModField.GetCustomAttribute<HideInInspector>() == null)
+                            {
+                                Debug.LogError($"'{f.DeclaringType.FullName}.{f.Name}' needs [HideInInspector]");
+                            }
+                        }
+#endif
+                        if (a.auto)
                         {
                             var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
-                            var slot = new MemberControl(f, isModField, member.FirstOrDefault());
+                            if (member.Length > 0)
+                            {
+                                var slot = new MemberControl(f, isModField, member[0]);
+                                list.Add(slot);
+                            } else
+                            {
+                                Debug.LogErrorFormat("{0}.{1} field/property is missing", srcType.FullName, f.Name);
+                            }
+                        } else
+                        {
+                            var slot = new MemberControl(f, isModField);
                             list.Add(slot);
-                            log?.LogFormat(LogType.Log, "{0}.{1}{2} field is missing", f.DeclaringType.Name, f.Name, MOD_SUFFIX);
                         }
                     }
                 }

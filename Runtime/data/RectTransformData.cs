@@ -25,7 +25,6 @@ namespace mulova.switcher
         [Store] public Vector2 sizeDelta;
         [HideInInspector] public bool sizeDelta_mod;
 
-        public RectTransform rect => _target as RectTransform;
         public override Type srcType => typeof(RectTransform);
 
         protected override void ApplyMember(MemberControl m, Component c)

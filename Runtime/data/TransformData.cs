@@ -18,10 +18,9 @@ namespace mulova.switcher
         [HideInInspector] public bool localRotation_mod;
         [Store] public Vector3 localScale;
         [HideInInspector] public bool localScale_mod;
-        [Store] public bool enabled;
+        [Store(false)] public bool enabled;
         [HideInInspector] public bool enabled_mod;
 
-        [UnityEngine.Serialization.FormerlySerializedAs("trans")]
         [SerializeField] protected Transform _target;
 
         public override bool active => enabled;
