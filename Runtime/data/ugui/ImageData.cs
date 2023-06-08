@@ -9,6 +9,7 @@ namespace mulova.switcher
     using System;
     using UnityEngine;
     using UnityEngine.UI;
+    using static UnityEngine.UI.ContentSizeFitter;
 
     [Serializable]
     public class ImageData : MaskableGraphicData<Image>

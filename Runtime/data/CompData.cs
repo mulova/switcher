@@ -111,36 +111,21 @@ namespace mulova.switcher
             return v0 == v1;
         }
 
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
+        public override int GetHashCode() => target != null ? target.GetHashCode() : base.GetHashCode();
 
-        public override string ToString()
-        {
-            return target != null ? target.ToString() : null;
-        }
+        public override string ToString() => target != null ? target.ToString() : null;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="data"></param>
         /// <returns>true if any of the CompData</returns>
+        public List<MemberControl> ListChangedMembers() => ListAttributedMembers().FindAll(m => m.HasChanged(this));
 
-        public List<MemberControl> ListChangedMembers()
-        {
-            var ret = new List<MemberControl>();
-            var members = ListAttributedMembers();
-            foreach (var m in members)
-            {
-                if (m.HasChanged(this))
-                {
-                    ret.Add(m);
-                }
-            }
-            return ret;
-        }
-
+        /// <summary>
+        /// Use when the value setting order is important like RectTransform
+        /// </summary>
+        /// <param name="members"></param>
         protected virtual void SortMembers(List<MemberControl> members) { }
 
         public List<MemberControl> ListAttributedMembers()
