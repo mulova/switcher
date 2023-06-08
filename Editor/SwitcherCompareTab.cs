@@ -96,7 +96,7 @@ namespace mulova.switcher
                                         {
                                             for (int s=0; s<switcher.cases.Count; ++s)
                                             {
-                                                var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{CompData.MOD_SUFFIX}");
+                                                var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
                                                 if (isSet != null)
                                                 {
                                                     isSet.boolValue = false;

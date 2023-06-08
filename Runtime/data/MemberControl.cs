@@ -8,6 +8,7 @@ namespace mulova.switcher
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
     using UnityEngine;
     using UnityEngine.Events;
@@ -18,26 +19,37 @@ namespace mulova.switcher
         private readonly FieldInfo srcField;
         private readonly PropertyInfo srcProperty;
         private readonly FieldInfo storeField;
-        private readonly FieldInfo storeIsSetField;
+        private readonly FieldInfo storeModField;
         public string name => storeField.Name;
         public bool isCustom => srcField == null && srcProperty == null;
         public bool isReference => typeof(Component).IsAssignableFrom(storeField.FieldType);
-
-        private ILogger log => null;
-        //private ILogger log => Debug.unityLogger;
-
         public Type memberType => storeField.FieldType;
 
-        public MemberControl(FieldInfo storeField, FieldInfo storeIsSetField)
+        public static readonly BindingFlags INSTANCE_FLAGS = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+        public static readonly BindingFlags FIELD_FLAG = INSTANCE_FLAGS & ~BindingFlags.SetProperty & ~BindingFlags.GetProperty;
+        public static readonly BindingFlags PROPERTY_FLAG = INSTANCE_FLAGS & ~BindingFlags.GetField & ~BindingFlags.SetField;
+        public const string MOD_SUFFIX = "_mod";
+
+        private static ILogger log => null;
+        //private static ILogger log => Debug.unityLogger;
+
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Init()
         {
-            this.storeField = storeField;
-            this.storeIsSetField = storeIsSetField;
+            cache = null;
         }
 
-        public MemberControl(FieldInfo storeField, FieldInfo storeIsSetField, MemberInfo member)
+        public MemberControl(FieldInfo storeField, FieldInfo storeModField)
         {
             this.storeField = storeField;
-            this.storeIsSetField = storeIsSetField;
+            this.storeModField = storeModField;
+        }
+
+        public MemberControl(FieldInfo storeField, FieldInfo storeModField, MemberInfo member)
+        {
+            this.storeField = storeField;
+            this.storeModField = storeModField;
             switch (member)
             {
                 case FieldInfo f:
@@ -51,12 +63,12 @@ namespace mulova.switcher
 
         public bool HasChanged(ICompData store)
         {
-            return storeIsSetField == null || (bool)storeIsSetField.GetValue(store);
+            return storeModField == null || (bool)storeModField.GetValue(store);
         }
 
         public void SetChanged(ICompData store, bool changed)
         {
-            storeIsSetField?.SetValue(store, changed);
+            storeModField?.SetValue(store, changed);
         }
 
         public bool IsTypeOf(Type type) => type.IsAssignableFrom(memberType);
@@ -161,16 +173,16 @@ namespace mulova.switcher
             }
             try
             {
-                var isSet = storeIsSetField == null || (bool)storeIsSetField.GetValue(store);
-                if (!isSet)
+                var isMod = storeModField == null || (bool)storeModField.GetValue(store);
+                if (!isMod)
                 {
-                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2} is not set", target.name, storeIsSetField.DeclaringType.Name, storeIsSetField.Name);
+                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2} is not set", target.name, storeModField.DeclaringType.Name, storeModField.Name);
                     return;
                 }
                 var val = storeField.GetValue(store);
-                if (storeIsSetField != null)
+                if (storeModField != null)
                 {
-                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2} stored value: {3}", target.name, storeIsSetField.DeclaringType.Name, storeIsSetField.Name, val);
+                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2} stored value: {3}", target.name, storeModField.DeclaringType.Name, storeModField.Name, val);
                 }
                 if (srcField != null)
                 {
@@ -254,6 +266,45 @@ namespace mulova.switcher
             {
                 return IsHierarchyMatch(t1.parent, t2.parent);
             }
+        }
+
+        private static Dictionary<Type, List<MemberControl>> cache;
+
+        public static List<MemberControl> ListAttributedMembers(Type srcType, Type storeType, Action<List<MemberControl>> sorter)
+        {
+            if (cache == null)
+            {
+                cache = new Dictionary<Type, List<MemberControl>>();
+            }
+            if (!cache.TryGetValue(srcType, out var list))
+            {
+                list = new List<MemberControl>();
+                var storeFields = storeType.GetFields(FIELD_FLAG);
+                foreach (FieldInfo f in storeFields)
+                {
+                    var a = f.GetCustomAttribute<StoreAttribute>();
+                    if (a != null)
+                    {
+                        var isModField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
+                        if (isModField != null && isModField.FieldType == typeof(bool))
+                        {
+                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
+                            var slot = new MemberControl(f, isModField, member.FirstOrDefault());
+                            list.Add(slot);
+                        }
+                        else
+                        {
+                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
+                            var slot = new MemberControl(f, isModField, member.FirstOrDefault());
+                            list.Add(slot);
+                            log?.LogFormat(LogType.Log, "{0}.{1}{2} field is missing", f.DeclaringType.Name, f.Name, MOD_SUFFIX);
+                        }
+                    }
+                }
+                sorter?.Invoke(list);
+                cache[srcType] = list;
+            }
+            return list;
         }
     }
 }

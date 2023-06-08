@@ -115,7 +115,7 @@ namespace mulova.switcher
 
         public static bool GetDiffs(ICompData[] data)
         {
-            var members = CompData.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
+            var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
             var isTransform = typeof(Transform).IsAssignableFrom(data[0].srcType);
             var rectChanged = false;

@@ -8,31 +8,15 @@ namespace mulova.switcher
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
     using UnityEngine;
     using UnityEngine.Events;
 
     [Serializable, UnityEngine.Scripting.Preserve]
     public abstract class CompData : ICompData
     {
-        public const string MOD_SUFFIX = "_mod";
-        public static readonly BindingFlags INSTANCE_FLAGS = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
-        public static readonly BindingFlags FIELD_FLAG = INSTANCE_FLAGS & ~BindingFlags.SetProperty & ~BindingFlags.GetProperty;
-        public static readonly BindingFlags PROPERTY_FLAG = INSTANCE_FLAGS & ~BindingFlags.GetField & ~BindingFlags.SetField;
-        private static Dictionary<Type, List<MemberControl>> cache;
-
         public abstract Type srcType { get; }
         public abstract bool active { get; }
         public abstract Component target { get; set; }
-
-        private static ILogger log => Debug.unityLogger;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void Init()
-        {
-            cache = null;
-        }
 
         public virtual void ApplyTo(Component c)
         {
@@ -161,47 +145,12 @@ namespace mulova.switcher
 
         public List<MemberControl> ListAttributedMembers()
         {
-            return ListAttributedMembers(srcType, GetType(), SortMembers);
+            return MemberControl.ListAttributedMembers(srcType, GetType(), SortMembers);
         }
 
         public MemberControl GetMember(string name)
         {
             return ListAttributedMembers().Find(m => m.name == name);
-        }
-
-        public static List<MemberControl> ListAttributedMembers(Type srcType, Type storeType, Action<List<MemberControl>> sorter)
-        { 
-            if (cache == null)
-            {
-                cache = new Dictionary<Type, List<MemberControl>>();
-            }
-            if (!cache.TryGetValue(srcType, out var list))
-            {
-                list = new List<MemberControl>();
-                foreach (FieldInfo f in storeType.GetFields(FIELD_FLAG))
-                {
-                    var a = f.GetCustomAttribute<StoreAttribute>();
-                    if (a != null)
-                    {
-                        var isSetField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
-                        if (isSetField != null && isSetField.FieldType == typeof(bool))
-                        {
-                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
-                            var slot = new MemberControl(f, isSetField, member.FirstOrDefault());
-                            list.Add(slot);
-                        } else
-                        {
-                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
-                            var slot = new MemberControl(f, isSetField, member.FirstOrDefault());
-                            list.Add(slot);
-                            log?.LogFormat(LogType.Log, "{0}.{1}_mod field is missing", f.DeclaringType.Name, f.Name);
-                        }
-                    }
-                }
-                sorter?.Invoke(list);
-                cache[srcType] = list;
-            }
-            return list;
         }
     }
 }

@@ -32,6 +32,13 @@ namespace mulova.switcher
         [HideInInspector] public bool flipY_mod;
         [Store] public SpriteSortPoint spriteSortPoint;
         [HideInInspector] public bool spriteSortPoint_mod;
+
+        [Store] public int sortingLayerID;
+        [HideInInspector] public bool sortingLayerID_mod;
+        [Store] public int sortingOrder;
+        [HideInInspector] public bool sortingOrder_mod;
+        [Store] public Material sharedMaterial;
+        [HideInInspector] public bool sharedMaterial_mod;
     }
 }
 
