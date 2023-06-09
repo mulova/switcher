@@ -138,6 +138,9 @@ namespace mulova.switcher
                     if (v0 == null ^ vi == null)
                     {
                         changed = true;
+                    } else if (v0 is Object o0 && o0 != (System.Object)vi)
+                    {
+                        changed = true;
                     }
                     else if (v0 != null && !data[0].MemberEquals(m, v0, vi))
                     {

@@ -18,6 +18,9 @@ namespace mulova.switcher
         private bool hasPreset;
         internal static bool showPreset { get; set; } = false;
 
+        private SerializedProperty enumType;
+        private SerializedProperty caseSensitive;
+
         internal static bool IsPreset(IList<string> actives)
         {
             if (activeSet.Count != actives.Count)
@@ -65,6 +68,8 @@ namespace mulova.switcher
             switcher = (Switcher)target;
             hasPreset = switcher.preset.Count > 0;
             showPreset = false;
+            enumType = serializedObject.FindProperty("enumType");
+            caseSensitive = serializedObject.FindProperty("caseSensitive");
         }
 
         private void OnDisable()
@@ -126,6 +131,8 @@ namespace mulova.switcher
         private string createSwitcherErr;
         public override void OnInspectorGUI()
         {
+            var isMultiple = Selection.gameObjects.Length > 1;
+
             DrawDefaultInspector();
             if (switcher.cases.Count == 0)
             {
@@ -136,7 +143,7 @@ namespace mulova.switcher
                 {
                     EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
                 }
-            } else if (switcher.cases.Count > 0)
+            } else if (switcher.cases.Count > 0 && !isMultiple)
             {
                 if (GUILayout.Button("Open Compare View"))
                 {
@@ -157,6 +164,12 @@ namespace mulova.switcher
                         }
                     }
                 }
+            }
+
+            if (switcher.showMisc || isMultiple)
+            {
+                EditorGUILayout.PropertyField(enumType);
+                EditorGUILayout.PropertyField(caseSensitive);
             }
         }
     }

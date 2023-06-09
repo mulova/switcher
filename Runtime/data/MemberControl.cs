@@ -88,7 +88,8 @@ namespace mulova.switcher
                 {
                     throw new Exception($"No getter member for '{c.GetType().Name}.{storeField.Name}'");
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
                 throw;
@@ -100,7 +101,8 @@ namespace mulova.switcher
             try
             {
                 storeField.SetValue(store, val);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
             }
@@ -124,7 +126,8 @@ namespace mulova.switcher
                     {
                         var e = val as UnityEventBase;
                         e.ReplaceMatchingRoot(rc, r0);
-                    } else if (IsTypeOf(typeof(Component)))
+                    }
+                    else if (IsTypeOf(typeof(Component)))
                     {
                         var c = val as Component;
                         var match = GetComponentMatch(c, rc, r0);
@@ -132,7 +135,8 @@ namespace mulova.switcher
                         {
                             val = match;
                         }
-                    } else if (IsTypeOf(typeof(GameObject)))
+                    }
+                    else if (IsTypeOf(typeof(GameObject)))
                     {
                         var o = val as GameObject;
                         var t = o.transform;
@@ -145,7 +149,8 @@ namespace mulova.switcher
                 }
                 SetValue(store, val);
             }
-            catch {
+            catch
+            {
                 Debug.LogErrorFormat("{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
                 throw;
             }
@@ -197,7 +202,8 @@ namespace mulova.switcher
                 {
                     throw new Exception($"'{storeField.Name}' is custom field. Override CompData.Collect(), CompData.Apply() methods");
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
             }
@@ -214,7 +220,8 @@ namespace mulova.switcher
             if (match != null)
             {
                 return match.GetComponent(c.GetType());
-            } else
+            }
+            else
             {
                 return null;
             }
@@ -235,7 +242,8 @@ namespace mulova.switcher
                 if (i < ret.childCount)
                 {
                     ret = ret.GetChild(i);
-                } else
+                }
+                else
                 {
                     return null;
                 }
@@ -307,13 +315,22 @@ namespace mulova.switcher
                             var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
                             if (member.Length > 0)
                             {
-                                var slot = new MemberControl(f, isModField, member[0]);
-                                list.Add(slot);
-                            } else
+                                if (member[0] is PropertyInfo p && (!p.CanRead || !p.CanWrite))
+                                {
+                                    Debug.LogErrorFormat("{0}.{1} is not readable / writable", srcType.FullName, f.Name);
+                                }
+                                else
+                                {
+                                    var slot = new MemberControl(f, isModField, member[0]);
+                                    list.Add(slot);
+                                }
+                            }
+                            else
                             {
                                 Debug.LogErrorFormat("{0}.{1} field/property is missing", srcType.FullName, f.Name);
                             }
-                        } else
+                        }
+                        else
                         {
                             var slot = new MemberControl(f, isModField);
                             list.Add(slot);

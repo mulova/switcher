@@ -14,7 +14,11 @@ namespace mulova.switcher
     [Serializable]
     public class Case : ICloneable
     {
-        [SerializeReference] [SubclassSelector] public List<ICompData> data = new List<ICompData>();
+#if SERIALIZE_REFERENCE_EXT
+        [SubclassSelector] 
+#endif
+        [SerializeReference] public List<ICompData> data = new List<ICompData>();
+
         public UnityEvent action;
         [EnumPopup("enumType")] public string name;
 

@@ -6,7 +6,8 @@
 
 # Requirement
 - Unity 2019.3 or higher for extending script diff ( 'SerializeReference' attribute is required )
-- https://github.com/mackysoft/Unity-SerializeReferenceExtensions
+- "com.mackysoft.serializereference-extensions": "https://github.com/mackysoft/Unity-SerializeReferenceExtensions.git?path=Assets/MackySoft/MackySoft.SerializeReferenceExtensions/"
+  
 
 # Constraints
 - Siblings should not have the same names

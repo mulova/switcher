@@ -17,8 +17,8 @@ namespace mulova.switcher
     {
         public List<Case> cases = new List<Case>();
         [SerializeField, HideInInspector] public List<SwitchPreset> preset = new List<SwitchPreset>();
-        [SerializeField, EnumType] private string enumType = "";
-        public bool caseSensitive = true;
+        [HideInInspector][SerializeField, EnumType] private string enumType = "";
+        [HideInInspector] public bool caseSensitive = true;
 
         private Case DUMMY = new Case();
         private HashSet<string> keySet = new HashSet<string>();
@@ -26,13 +26,14 @@ namespace mulova.switcher
 
         private ILogger log => Debug.unityLogger;
         public List<string> allKeys => cases.ConvertAll(s => s.name);
-        public bool showData { get; set; } = false; // editor only
         private bool _showAction { get; set; } = false; // editor only
         public bool showAction { // editor only
             get => _showAction || hasAction;
             set => _showAction = value;
         } 
         public bool hasAction => cases.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
+        public bool showData { get; set; } = false; // editor only. needs SerializeReferenceExtensions
+        public bool showMisc { get; set; } = false;
 
         private void Start()
         {
@@ -331,11 +332,19 @@ namespace mulova.switcher
             }
         }
 
+        [ContextMenu("Toggle Misc")]
+        private void ToggleMisc()
+        {
+            showMisc = !showMisc;
+        }
+
+#if SERIALIZE_REFERENCE_EXT
         [ContextMenu("Toggle ShowData")]
         private void ToggleData()
         {
             showData = !showData;
         }
+#endif
 
         private void OnValidate()
         {
