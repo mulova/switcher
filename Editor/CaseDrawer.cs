@@ -50,7 +50,14 @@ namespace mulova.switcher
             // Draw Title
             if (rename)
             {
-                EditorGUI.PropertyField(nameBounds[0], n, new GUIContent(""));
+                using (var s = new EditorGUI.ChangeCheckScope())
+                {
+                    EditorGUI.DelayedTextField(nameBounds[0], n, new GUIContent(""));
+                    if (s.changed)
+                    {
+                        rename = false;
+                    }
+                }
             } else
             {
                 using (new EnableScope(!string.IsNullOrEmpty(n.stringValue)))
@@ -106,7 +113,8 @@ namespace mulova.switcher
                             rename = !rename;
                             break;
                         case "Actions":
-                            switcher.showAction = !switcher.showAction;
+                            var c = switcher.cases.Find(c=> c.name == n.stringValue);
+                            c.showAction = !c.showAction;
                             break;
                     }
                 }

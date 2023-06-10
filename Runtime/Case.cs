@@ -18,9 +18,11 @@ namespace mulova.switcher
         [SubclassSelector] 
 #endif
         [SerializeReference] public List<ICompData> data = new List<ICompData>();
-
         public UnityEvent action;
         [EnumPopup("enumType")] public string name;
+
+        public bool showAction { get; set; } = false; // editor only
+        internal bool hasAction => action != null && action.GetPersistentEventCount() > 0;
 
         public bool isValid
         {

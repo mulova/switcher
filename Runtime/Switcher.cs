@@ -26,12 +26,8 @@ namespace mulova.switcher
 
         private ILogger log => Debug.unityLogger;
         public List<string> allKeys => cases.ConvertAll(s => s.name);
-        private bool _showAction { get; set; } = false; // editor only
-        public bool showAction { // editor only
-            get => _showAction || hasAction;
-            set => _showAction = value;
-        } 
-        public bool hasAction => cases.Find(s => s.action != null && s.action.GetPersistentEventCount() > 0) != null;
+        public bool showAction => cases.Exists(c => c.showAction || c.hasAction);
+        public bool hasAction => cases.Exists(s => s.hasAction);
         public bool showData { get; set; } = false; // editor only. needs SerializeReferenceExtensions
         public bool showMisc { get; set; } = false;
 
@@ -43,7 +39,7 @@ namespace mulova.switcher
             }
         }
 
-        public void ResetSwitch()
+        public void ResetKeys()
         {
             keySet.Clear();
         }
@@ -54,14 +50,14 @@ namespace mulova.switcher
             return keySet.Contains(s);
         }
 
-        public bool Is(params object[] list)
+        public bool Is(params object[] keys)
         {
-            var count = list?.Length ?? 0;
+            var count = keys?.Length ?? 0;
             if (count == keySet.Count)
             {
-                if (list != null)
+                if (keys != null)
                 {
-                    foreach (object o in list)
+                    foreach (object o in keys)
                     {
                         if (!Contains(o))
                         {
@@ -84,9 +80,9 @@ namespace mulova.switcher
             return Is(p.keys);
         }
 
-        public void SetPreset(object id)
+        public void SetPreset(object key)
         {
-            var k = NormalizeKey(id);
+            var k = NormalizeKey(key);
             foreach (var p in preset)
             {
                 if (p.presetName == k)
@@ -97,26 +93,26 @@ namespace mulova.switcher
             }
         }
 
-        public void Collect(string setId, bool changedOnly)
+        public void Collect(string caseKey, bool changedOnly)
         {
-            var set = cases.Find(s => s.name == setId);
-            foreach (var d in set.data)
+            var c = cases.Find(s => s.name == caseKey);
+            foreach (var d in c.data)
             {
                 d.Collect(d.target, transform, transform, changedOnly);
             }
         }
 
-        public void Add(params object[] list)
+        public void Add(params object[] keys)
         {
-            foreach (object o in list)
+            foreach (object o in keys)
             {
                 keySet.Add(NormalizeKey(o));
             }
         }
 
-        public void Remove(params object[] list)
+        public void Remove(params object[] keys)
         {
-            foreach (object o in list)
+            foreach (object o in keys)
             {
                 keySet.Remove(NormalizeKey(o));
             }
@@ -170,13 +166,11 @@ namespace mulova.switcher
             foreach (var c in merged.cases)
             {
                 var clone = c.Clone() as Case;
-#if UNITY_2019_1_OR_NEWER
                 for (int i = 0; i < clone.data.Count; ++i)
                 {
                     var matching = GetMatchingSibling(merged.transform, clone.data[i].target.transform, transform);
                     clone.data[i].target = GetMatchingComponent(clone.data[i].target, matching);
                 }
-#endif
                 cases.Add(clone);
             }
         }
@@ -220,7 +214,7 @@ namespace mulova.switcher
 
         /// <summary>
         /// </summary>
-        /// <param name="keysOrIndex">can be id (string) or index (int) </param>
+        /// <param name="keysOrIndex">can be key (string) or index (int) </param>
         public void Apply(params object[] keysOrIndex)
         {
             if (Is(keysOrIndex))
@@ -228,7 +222,7 @@ namespace mulova.switcher
                 //log.Debug("Already set");
                 return;
             }
-            ResetSwitch();
+            ResetKeys();
             Add(keysOrIndex);
             Apply();
         }
@@ -243,7 +237,6 @@ namespace mulova.switcher
                     match++;
                     try
                     {
-#if UNITY_2019_1_OR_NEWER
                         foreach (var d in c.data)
                         {
 #if UNITY_EDITOR
@@ -266,7 +259,6 @@ namespace mulova.switcher
                             }
 #endif
                         }
-#endif
                         c.action?.Invoke();
                     }
                     catch (Exception ex)
