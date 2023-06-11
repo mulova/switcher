@@ -234,26 +234,42 @@ namespace mulova.switcher
         public static bool IsComponentMatch(IList<Transform> objs)
         {
             var passed = true;
-            var c0 = objs[0].GetComponents<Component>().FindAll(c=> !(c is Switcher));
-            for (int i=1; i<objs.Count; ++i)
+            var comps = new List<Component>[objs.Count];
+            var count = -1;
+            for (int i = 0; i < objs.Count; ++i)
             {
-                var ci = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
-                if (c0.Count != ci.Count)
+                comps[i] = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
+                if (i == 0)
                 {
-                    Debug.LogError($"Component Mismatch(1/2): '{objs[0].transform.GetScenePath()}': {c0.Count - 1}", objs[0]);
-                    Debug.LogError($"Component Mismatch(2/2): '{objs[i].transform.GetScenePath()}': {ci.Count - 1}", objs[i]);
+                    count = comps[i].Count;
+                } else if (count != comps[i].Count)
+                {
                     passed = false;
-                } else
+                }
+            }
+            if (passed)
+            {
+                for (int i = 0; i < comps[0].Count; ++i)
                 {
-                    for (int j=0; j<ci.Count; ++j)
+                    for (int j = 1; j < comps.Length; ++j)
                     {
-                        if (c0[j].GetType() != ci[j].GetType())
+                        if (comps[0][i].GetType() != comps[j][i].GetType())
                         {
-                            Debug.LogError($"Type Mismatch(1/2): {c0[j].name}.{c0[j].GetType().Name}", c0[j]);
-                            Debug.LogError($"Type Mismatch(2/2): {ci[j].name}.{ci[j].GetType().Name}", ci[j]);
+                            for (int k = 0; k < comps.Length; ++k)
+                            {
+                                Debug.LogError($"Type Mismatch({k}/{comps[0].Count}): {comps[k][i].name} {comps[k][i].GetType().Name}({i})", comps[k][i]);
+                            }
                             passed = false;
+                            break;
                         }
                     }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < objs.Count; ++i)
+                {
+                    Debug.LogError($"Component count mismatch({i+1}/{objs.Count}): '{objs[i].transform.GetScenePath()}' ({comps[i].Count})", objs[i]);
                 }
             }
             for (int c=0; c<objs[0].childCount; ++c)
@@ -283,15 +299,23 @@ namespace mulova.switcher
 
         public static Transform CloneSibling(Transform c1, Transform parent, int siblingIndex)
         {
-            if (c1 != null)
+            if (c1 == null)
             {
-                var child = Object.Instantiate(c1, parent, false);
-                child.name = c1.name;
-                Undo.RegisterCreatedObjectUndo(child.gameObject, c1.name);
-                child.SetSiblingIndex(siblingIndex);
-                return child;
+                return null;
             }
-            return null;
+            Transform child = null;
+            if (PrefabUtility.IsAnyPrefabInstanceRoot(c1.gameObject))
+            {
+                var p = PrefabUtility.GetCorrespondingObjectFromOriginalSource(c1.gameObject);
+                child = (PrefabUtility.InstantiatePrefab(p, parent) as GameObject).transform;
+            } else
+            {
+                child = Object.Instantiate(c1, parent, false);
+            }
+            child.name = c1.name;
+            Undo.RegisterCreatedObjectUndo(child.gameObject, c1.name);
+            child.SetSiblingIndex(siblingIndex);
+            return child;
         }
 
         private static List<Transform> GetChildUnion(IList<Transform> parents)

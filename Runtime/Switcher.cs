@@ -20,16 +20,15 @@ namespace mulova.switcher
         [HideInInspector][SerializeField, EnumType] private string enumType = "";
         [HideInInspector] public bool caseSensitive = true;
 
-        private Case DUMMY = new Case();
         private HashSet<string> keySet = new HashSet<string>();
-        public ICollection<string> keys => keySet;
-
-        private ILogger log => Debug.unityLogger;
+        public IReadOnlyCollection<string> keys => keySet;
         public List<string> allKeys => cases.ConvertAll(s => s.name);
         public bool showAction => cases.Exists(c => c.showAction || c.hasAction);
         public bool hasAction => cases.Exists(s => s.hasAction);
         public bool showData { get; set; } = false; // editor only. needs SerializeReferenceExtensions
         public bool showMisc { get; set; } = false;
+
+        private ILogger log => Debug.unityLogger;
 
         private void Start()
         {
@@ -278,19 +277,6 @@ namespace mulova.switcher
             }
         }
 
-        private Case GetSlot(object key)
-        {
-            string id = NormalizeKey(key);
-            foreach (Case c in cases)
-            {
-                if (c.name.Equals(id, StringComparison.OrdinalIgnoreCase))
-                {
-                    return c;
-                }
-            }
-            return DUMMY;
-        }
-
         public IDisposable NewScope(object startKey, object endKey)
         {
             Apply(startKey);
@@ -320,7 +306,6 @@ namespace mulova.switcher
                 {
                     rootData[i - 1].ApplyTo(clone.transform);
                 }
-                //DestroyImmediate(clone.GetComponent<Switcher>());
             }
         }
 
