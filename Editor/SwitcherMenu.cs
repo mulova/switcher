@@ -118,12 +118,13 @@ namespace mulova.switcher
             }
             else
             {
-                if (!DiffExtractor.IsChildrenMatches(roots.ConvertAll(o => o.transform)))
+                var parents = roots.ConvertAll(o => o.transform);
+                DiffExtractor.CreateMissingChildren(parents);
+                for (int i=1; i < parents.Count; ++i)
                 {
-                    var parents = roots.ConvertAll(o => o.transform);
-                    DiffExtractor.CreateMissingChildren(parents);
+                    DiffExtractor.ReplaceRefs(parents[i].transform, parents[i].transform, parents[0].transform);
                 }
-                if (DiffExtractor.IsComponentMatch(roots.ConvertAll(o => o.transform)))
+                if (DiffExtractor.IsComponentMatch(parents))
                 {
                     Undo.RecordObjects(roots.ToArray(), "Diff");
                     MakeRootsActive(roots);

@@ -97,7 +97,7 @@ namespace mulova.switcher
             var c = cases.Find(s => s.name == caseKey);
             foreach (var d in c.data)
             {
-                d.Collect(d.target, transform, transform, changedOnly);
+                d.Collect(d.target, changedOnly);
             }
         }
 

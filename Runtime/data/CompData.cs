@@ -11,7 +11,7 @@ namespace mulova.switcher
     using UnityEngine;
     using UnityEngine.Events;
 
-    [Serializable, UnityEngine.Scripting.Preserve]
+    [Serializable]
     public abstract class CompData : ICompData
     {
         public abstract Type srcType { get; }
@@ -35,7 +35,7 @@ namespace mulova.switcher
             m.Apply(target, this);
         }
 
-        public virtual void Collect(Component src, Transform rc, Transform r0, bool changedOnly)
+        public virtual void Collect(Component src, bool changedOnly)
         {
             target = src;
             var members = ListAttributedMembers();
@@ -43,7 +43,7 @@ namespace mulova.switcher
             {
                 if (!changedOnly || m.HasChanged(this))
                 {
-                    CollectMember(m, src, rc, r0);
+                    CollectMember(m, src);
                 }
             }
         }
@@ -55,9 +55,9 @@ namespace mulova.switcher
         /// <param name="c">the component to collect data</param>
         /// <param name="r0">the first root</param>
         /// <param name="ri">the i th root</param>
-        protected virtual void CollectMember(MemberControl m, Component c, Transform rc, Transform r0)
+        protected virtual void CollectMember(MemberControl m, Component c)
         {
-            m.Collect(this, c, rc, r0);
+            m.Collect(this, c);
         }
 
         public override bool Equals(object obj)

@@ -12,7 +12,6 @@ namespace mulova.switcher
     using UnityEngine;
     using UnityEngine.Events;
 
-    [UnityEngine.Scripting.Preserve]
     public class MemberControl
     {
         private readonly FieldInfo srcField;
@@ -28,6 +27,7 @@ namespace mulova.switcher
         public static readonly BindingFlags FIELD_FLAG = INSTANCE_FLAGS & ~BindingFlags.SetProperty & ~BindingFlags.GetProperty;
         public static readonly BindingFlags PROPERTY_FLAG = INSTANCE_FLAGS & ~BindingFlags.GetField & ~BindingFlags.SetField;
         public const string MOD_SUFFIX = "_mod";
+        public readonly StoreAttribute attr;
 
         private static ILogger log => null;
         //private static ILogger log => Debug.unityLogger;
@@ -39,16 +39,15 @@ namespace mulova.switcher
             cache = null;
         }
 
-        public MemberControl(FieldInfo storeField, FieldInfo storeModField)
+        public MemberControl(FieldInfo storeField, FieldInfo storeModField, StoreAttribute attr)
         {
             this.storeField = storeField;
             this.storeModField = storeModField;
+            this.attr = attr;
         }
 
-        public MemberControl(FieldInfo storeField, FieldInfo storeModField, MemberInfo member)
+        public MemberControl(MemberInfo member, FieldInfo storeField, FieldInfo storeModField, StoreAttribute attr) : this(storeField, storeModField, attr)
         {
-            this.storeField = storeField;
-            this.storeModField = storeModField;
             switch (member)
             {
                 case FieldInfo f:
@@ -96,7 +95,7 @@ namespace mulova.switcher
             }
         }
 
-        public void SetValue(ICompData store, object val)
+        public void StoreValue(ICompData store, object val)
         {
             try
             {
@@ -113,41 +112,12 @@ namespace mulova.switcher
         /// </summary>
         /// <param name="store"></param>
         /// <param name="src"></param>
-        /// <param name="rc">root of the current case</param>
-        /// <param name="r0">root of the first case</param>
-        public void Collect(ICompData store, Component src, Transform rc, Transform r0)
+        public void Collect(ICompData store, Component src)
         {
             try
             {
                 var val = GetValue(src);
-                if (val != null && rc != r0)
-                {
-                    if (IsTypeOf(typeof(UnityEventBase)))
-                    {
-                        var e = val as UnityEventBase;
-                        e.ReplaceMatchingRoot(rc, r0);
-                    }
-                    else if (IsTypeOf(typeof(Component)))
-                    {
-                        var c = val as Component;
-                        var match = GetComponentMatch(c, rc, r0);
-                        if (match != null)
-                        {
-                            val = match;
-                        }
-                    }
-                    else if (IsTypeOf(typeof(GameObject)))
-                    {
-                        var o = val as GameObject;
-                        var t = o.transform;
-                        var match = GetTransformMatch(t, rc, r0);
-                        if (match != null)
-                        {
-                            val = match.gameObject;
-                        }
-                    }
-                }
-                SetValue(store, val);
+                StoreValue(store, val);
             }
             catch
             {
@@ -209,70 +179,36 @@ namespace mulova.switcher
             }
         }
 
-        public override string ToString()
+        public void Apply(Component target, object value)
         {
-            return $"{memberType.Name}.{name}";
-        }
-
-        public static Component GetComponentMatch(Component c, Transform root, Transform targetRoot)
-        {
-            var match = GetTransformMatch(c.transform, root, targetRoot);
-            if (match != null)
+            if (target == null)
             {
-                return match.GetComponent(c.GetType());
+                return;
             }
-            else
+            try
             {
-                return null;
-            }
-        }
-
-        public static Transform GetTransformMatch(Transform t, Transform root, Transform targetRoot)
-        {
-            var hierarchy = new List<int>();
-            while (t != root && t != null)
-            {
-                hierarchy.Add(t.GetSiblingIndex());
-                t = t.parent;
-            }
-            hierarchy.Reverse();
-            var ret = targetRoot;
-            foreach (var i in hierarchy)
-            {
-                if (i < ret.childCount)
+                if (srcField != null)
                 {
-                    ret = ret.GetChild(i);
+                    srcField.SetValue(target, value);
+                }
+                else if (srcProperty != null)
+                {
+                    srcProperty.SetValue(target, value);
                 }
                 else
                 {
-                    return null;
+                    throw new Exception($"{storeField.ReflectedType.FullName}.{storeField.Name}");
                 }
             }
-            return ret;
+            catch (Exception ex)
+            {
+                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
+            }
         }
 
-        public static bool IsHierarchyMatch(Transform t1, Transform t2)
+        public override string ToString()
         {
-            if (t1 == t2)
-            {
-                return true;
-            }
-            else if (t1 != null ^ t2 != null)
-            {
-                return false;
-            }
-            else if (t1.GetSiblingIndex() != t2.GetSiblingIndex())
-            {
-                return false;
-            }
-            else if (t1.parent == t2.parent) // root doesn't need to be the same transform
-            {
-                return true;
-            }
-            else
-            {
-                return IsHierarchyMatch(t1.parent, t2.parent);
-            }
+            return $"{memberType.Name}.{name}";
         }
 
         private static Dictionary<Type, List<MemberControl>> cache;
@@ -310,7 +246,12 @@ namespace mulova.switcher
                             }
                         }
 #endif
-                        if (a.auto)
+                        if (a.manual)
+                        {
+                            var slot = new MemberControl(f, isModField, a);
+                            list.Add(slot);
+                        }
+                        else
                         {
                             var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
                             if (member.Length > 0)
@@ -321,7 +262,7 @@ namespace mulova.switcher
                                 }
                                 else
                                 {
-                                    var slot = new MemberControl(f, isModField, member[0]);
+                                    var slot = new MemberControl(member[0], f, isModField, a);
                                     list.Add(slot);
                                 }
                             }
@@ -330,17 +271,56 @@ namespace mulova.switcher
                                 Debug.LogErrorFormat("{0}.{1} field/property is missing", srcType.FullName, f.Name);
                             }
                         }
-                        else
-                        {
-                            var slot = new MemberControl(f, isModField);
-                            list.Add(slot);
-                        }
                     }
                 }
                 sorter?.Invoke(list);
                 cache[srcType] = list;
             }
             return list;
+        }
+
+        /// <param name="rc">root of the current case</param>
+        /// <param name="r0">root of the first case</param>
+        public void ReplaceRefs(Component comp, Transform rc, Transform r0)
+        {
+            try
+            {
+                var val = GetValue(comp);
+                if (val != null && rc != r0)
+                {
+                    if (IsTypeOf(typeof(UnityEventBase)))
+                    {
+                        var e = val as UnityEventBase;
+                        e.ReplaceMatchingTarget(rc, r0);
+                    }
+                    else if (IsTypeOf(typeof(Component)))
+                    {
+                        var c = val as Component;
+                        var match = c.GetHierarchyPair(rc, r0);
+                        if (match != null)
+                        {
+                            val = match;
+                        }
+                    }
+                    else if (IsTypeOf(typeof(GameObject)))
+                    {
+                        var o = val as GameObject;
+                        var t = o.transform;
+                        var match = t.GetHierarchyPair(rc, r0);
+                        if (match != null)
+                        {
+                            val = match.gameObject;
+                        }
+                    }
+                }
+
+                Apply(comp, val);
+            }
+            catch
+            {
+                Debug.LogErrorFormat("{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
+                throw;
+            }
         }
     }
 }

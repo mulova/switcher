@@ -9,20 +9,47 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
+    using UnityEngine.Assertions;
     using Object = UnityEngine.Object;
 
     public static class DiffExtractor
     {
+        public static void ReplaceRefs(Transform trans, Transform rc, Transform r0)
+        {
+            //Assert.IsTrue(trans == rc || trans.IsChildOf(rc));
+            var comps = trans.GetComponents<Component>();
+            foreach (var c in comps)
+            {
+                var data = CompDataFactory.instance.GetComponentData(c);
+                if (data != null)
+                {
+                    var members = data.ListAttributedMembers();
+                    foreach (var m in members)
+                    {
+                        if (!m.attr.manual)
+                        {
+                            m.ReplaceRefs(c, rc, r0);
+                        }
+                    }
+                }
+            }
+            // Recursive call
+            foreach (Transform child in trans)
+            {
+                ReplaceRefs(child, rc, r0);
+            }
+        }
+
         public static void CreateMissingChildren(IList<Transform> roots)
         {
-            var children = GetChildUnion(roots);
+            var union = GetChildUnion(roots);
 
             foreach (var p in roots)
             {
                 int insertIndex = 0;
-                for (int ic = 0; ic < children.Count; ++ic)
+                for (int ic = 0; ic < union.Count; ++ic)
                 {
-                    var c = children[ic];
+                    var c = union[ic];
                     // find matching child
                     Transform found = null;
                     for (int i = 0; i < p.childCount && !found; ++i)
@@ -35,7 +62,8 @@ namespace mulova.switcher
                     }
                     if (found == null)
                     {
-                        var clone = CloneSibling(c, p, insertIndex);
+                        var clone = CloneSibling(c.child, p, insertIndex);
+                        ReplaceRefs(clone, c.root, p);
                         clone.gameObject.SetActive(false);
                         ++insertIndex;
                     }
@@ -97,7 +125,7 @@ namespace mulova.switcher
             var arr = new ICompData[comps.Length];
             for (int i = 0; i < arr.Length; ++i)
             {
-                arr[i] = CompDataGenerator.instance.GetComponentData(comps[i][index], roots[i], roots[0]);
+                arr[i] = CompDataFactory.instance.GetComponentData(comps[i][index]);
             }
             if (arr[0] != null)
             {
@@ -146,7 +174,7 @@ namespace mulova.switcher
                     {
                         if (m.isReference && v0.GetType() == vi.GetType())
                         {
-                            changed = !MemberControl.IsHierarchyMatch(((Component)v0).transform, ((Component)vi).transform);
+                            changed = !((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
                         }
                         else
                         {
@@ -297,28 +325,42 @@ namespace mulova.switcher
             return -1;
         }
 
-        public static Transform CloneSibling(Transform c1, Transform parent, int siblingIndex)
+        public static Transform CloneSibling(Transform src, Transform parent, int siblingIndex)
         {
-            if (c1 == null)
+            if (src == null)
             {
                 return null;
             }
-            Transform child = null;
-            if (PrefabUtility.IsAnyPrefabInstanceRoot(c1.gameObject))
+            Transform clone;
+            if (PrefabUtility.IsAnyPrefabInstanceRoot(src.gameObject))
             {
-                var p = PrefabUtility.GetCorrespondingObjectFromOriginalSource(c1.gameObject);
-                child = (PrefabUtility.InstantiatePrefab(p, parent) as GameObject).transform;
+                var p = PrefabUtility.GetCorrespondingObjectFromOriginalSource(src.gameObject);
+                clone = (PrefabUtility.InstantiatePrefab(p, parent) as GameObject).transform;
             } else
             {
-                child = Object.Instantiate(c1, parent, false);
+                clone = Object.Instantiate(src, parent, false);
             }
-            child.name = c1.name;
-            Undo.RegisterCreatedObjectUndo(child.gameObject, c1.name);
-            child.SetSiblingIndex(siblingIndex);
-            return child;
+            clone.name = src.name;
+            Undo.RegisterCreatedObjectUndo(clone.gameObject, src.name);
+            clone.SetSiblingIndex(siblingIndex);
+            return clone;
         }
 
-        private static List<Transform> GetChildUnion(IList<Transform> parents)
+        class RootNChild
+        {
+            public readonly Transform root;
+            public readonly Transform child;
+
+            public string name => child.name;
+
+            public RootNChild(Transform root, Transform child)
+            {
+                this.root = root;
+                this.child = child;
+            }
+
+        }
+        private static List<RootNChild> GetChildUnion(IList<Transform> parents)
         {
             List<Transform> sorted = new List<Transform>(parents);
             sorted.Sort(SortByChildCount);
@@ -328,31 +370,44 @@ namespace mulova.switcher
                 return t2.childCount - t1.childCount;
             }
 
-            List<Transform> names = new List<Transform>();
-            foreach (var p in parents)
+            List<RootNChild> union = new List<RootNChild>();
+            for (int i=0; i < parents[0].childCount; ++i)
             {
-                for (int i = 0; i < p.childCount; ++i)
+                union.Add(new RootNChild (parents[0], parents[0].GetChild(i)));
+            }
+
+            for (int i=1; i<parents.Count; ++i)
+            {
+                var p = parents[i];
+                var oldIndex = -1;
+                for (int j = 0; j < p.childCount; ++j)
                 {
-                    var c = p.GetChild(i);
-                    int index = names.FindIndex(t => t.name == c.name);
+                    var c = p.GetChild(j);
+                    int index = union.FindIndex(t => t.name == c.name);
                     if (index < 0)
                     {
-                        for (var j = i + 1; j < p.childCount && index < 0; ++j)
+                        for (var k = j + 1; k < p.childCount && index < 0; ++k)
                         {
-                            index = names.FindIndex(t => t.name == p.GetChild(j).name);
+                            index = union.FindIndex(t => t.name == p.GetChild(k).name);
                         }
                         if (index < 0)
                         {
-                            names.Add(c);
+                            index = union.Count;
+                            union.Add(new RootNChild(p, c));
                         }
                         else
                         {
-                            names.Insert(index, c);
+                            union.Insert(index, new RootNChild(p, c));
                         }
                     }
+                    if (oldIndex > index)
+                    {
+                        throw new System.Exception($"Sibling order mismatch: {c.GetScenePath()}");
+                    }
+                    oldIndex = index;
                 }
             }
-            return names;
+            return union;
         }
 
         internal static List<T>[] FindAll<T>(List<ICompData>[] diffs) where T : ICompData

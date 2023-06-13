@@ -11,18 +11,18 @@ namespace mulova.switcher
     using System;
     using Object = UnityEngine.Object;
 
-    internal class CompDataGenerator
+    internal class CompDataFactory
     {
-        internal static CompDataGenerator instance = new CompDataGenerator();
+        internal static CompDataFactory instance = new CompDataFactory();
         private Dictionary<Type, Type> pool;
 
-        public ICompData GetComponentData(Component c, Transform rc, Transform r0)
+        public ICompData GetComponentData(Component c)
         {
             var dataType = FindDataType(c.GetType());
             if (dataType != null)
             {
                 var o = Activator.CreateInstance(dataType) as ICompData;
-                o.Collect(c, rc, r0, false);
+                o.Collect(c, false);
                 return o;
             }
             else

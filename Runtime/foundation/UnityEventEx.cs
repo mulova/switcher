@@ -88,7 +88,7 @@ namespace mulova.switcher
                     {
                         return false;
                     }
-                    if (t1 != null && (t1.GetType() != t2.GetType() || t1.name != t2.name || !MemberControl.IsHierarchyMatch(t1.transform, t2.transform)))
+                    if (t1 != null && (t1.GetType() != t2.GetType() || t1.name != t2.name || !t1.transform.IsHierarchyPair(t2.transform)))
                     {
                         return false;
                     }
@@ -108,7 +108,7 @@ namespace mulova.switcher
             return true;
         }
 
-        public static void ReplaceMatchingRoot(this UnityEventBase evt, Transform root, Transform matchingRoot)
+        public static void ReplaceMatchingTarget(this UnityEventBase evt, Transform root, Transform matchingRoot)
         {
             if (matchingRoot == root)
             {
@@ -121,7 +121,7 @@ namespace mulova.switcher
                 {
                     // m_PersistentCalls.GetListener (index)?.target
                     object call = evt.GetPersistentCall(i);
-                    var match = MemberControl.GetComponentMatch(target, root, matchingRoot);
+                    var match = target.GetHierarchyPair(root, matchingRoot);
                     if (match != null)
                     {
                         SetPersistentTarget(call, match);

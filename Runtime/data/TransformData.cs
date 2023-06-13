@@ -18,7 +18,7 @@ namespace mulova.switcher
         [HideInInspector] public bool localRotation_mod;
         [Store] public Vector3 localScale;
         [HideInInspector] public bool localScale_mod;
-        [Store(false)] public bool enabled;
+        [Store(manual:true)] public bool enabled;
         [HideInInspector] public bool enabled_mod;
 
         [SerializeField] protected Transform _target;
@@ -44,14 +44,14 @@ namespace mulova.switcher
             (c as Transform).hasChanged = true;
         }
 
-        protected override void CollectMember(MemberControl m, Component c, Transform rc, Transform r0)
+        protected override void CollectMember(MemberControl m, Component c)
         {
             if (m.name == nameof(enabled))
             {
                 enabled = c.gameObject.activeSelf;
             } else
             {
-                base.CollectMember(m, c, rc, r0);
+                base.CollectMember(m, c);
             }
         }
 

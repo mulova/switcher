@@ -9,6 +9,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using System.Text;
     using UnityEngine;
+    using UnityEngine.Assertions;
 
     public static class TransformEx
     {
@@ -50,6 +51,55 @@ namespace mulova.switcher
                     i++;
                 }
                 return (strBuilder.ToString(), paths, index);
+            }
+        }
+
+        public static Transform GetHierarchyPair(this Transform t, Transform root, Transform targetRoot)
+        {
+            Assert.IsTrue(t.IsChildOf(root));
+            var hierarchy = new List<int>();
+            while (t != root && t != null)
+            {
+                hierarchy.Add(t.GetSiblingIndex());
+                t = t.parent;
+            }
+            hierarchy.Reverse();
+            var ret = targetRoot;
+            foreach (var i in hierarchy)
+            {
+                if (i < ret.childCount)
+                {
+                    ret = ret.GetChild(i);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            return ret;
+        }
+
+        public static bool IsHierarchyPair(this Transform t1, Transform t2)
+        {
+            if (t1 == t2)
+            {
+                return true;
+            }
+            else if (t1 != null ^ t2 != null)
+            {
+                return false;
+            }
+            else if (t1.GetSiblingIndex() != t2.GetSiblingIndex())
+            {
+                return false;
+            }
+            else if (t1.parent == t2.parent) // root doesn't need to be the same transform
+            {
+                return true;
+            }
+            else
+            {
+                return IsHierarchyPair(t1.parent, t2.parent);
             }
         }
     }

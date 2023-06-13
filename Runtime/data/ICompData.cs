@@ -7,6 +7,7 @@
 namespace mulova.switcher
 {
     using System;
+    using System.Collections.Generic;
     using UnityEngine;
 
     // NOTE: Equals() and GetHashCode() must be implemented
@@ -16,7 +17,7 @@ namespace mulova.switcher
         bool active { get; }
         Component target { get; set; }
         void ApplyTo(Component c);
-        void Collect(Component c, Transform rc, Transform r0, bool changedOnly);
+        void Collect(Component c, bool changedOnly);
         /// <summary>
         /// 
         /// </summary>
@@ -25,6 +26,8 @@ namespace mulova.switcher
         /// <param name="vi"></param>
         /// <returns></returns>
         bool MemberEquals(MemberControl member, object val0, object vali);
+
+        List<MemberControl> ListAttributedMembers();
     }
 }
 

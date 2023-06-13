@@ -11,11 +11,11 @@ namespace mulova.switcher
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     public class StoreAttribute : Attribute
     {
-        public bool auto;
+        public bool manual;
 
-        public StoreAttribute(bool auto = true)
+        public StoreAttribute(bool manual = false)
         {
-            this.auto = auto;
+            this.manual = manual;
         }
     }
 }

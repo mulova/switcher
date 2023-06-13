@@ -103,13 +103,13 @@ namespace mulova.switcher
         [Store] public TMP_InputValidator inputValidator;
         [HideInInspector] public bool inputValidator_mod;
 
-        protected override void CollectMember(MemberControl m, Component c, Transform rc, Transform r0)
+        protected override void CollectMember(MemberControl m, Component c)
         {
             if (textComponent == null && m.name == nameof(caretColor))
             {
                 return;
             }
-            base.CollectMember(m, c, rc, r0);
+            base.CollectMember(m, c);
         }
     }
 }
