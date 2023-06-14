@@ -43,10 +43,15 @@ namespace mulova.switcher
             {
                 if (!changedOnly || m.HasChanged(this))
                 {
-                    CollectMember(m, src);
+                    if (IsCollectable(m, src))
+                    {
+                        CollectValue(m, src);
+                    }
                 }
             }
         }
+
+        protected virtual bool IsCollectable(MemberControl m, Component c) => true;
 
         /// <summary>
         /// 
@@ -55,7 +60,7 @@ namespace mulova.switcher
         /// <param name="c">the component to collect data</param>
         /// <param name="r0">the first root</param>
         /// <param name="ri">the i th root</param>
-        protected virtual void CollectMember(MemberControl m, Component c)
+        protected virtual void CollectValue(MemberControl m, Component c)
         {
             m.Collect(this, c);
         }

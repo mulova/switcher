@@ -6,32 +6,22 @@
 
 namespace mulova.switcher
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
     using UnityEditor;
     using UnityEngine;
     using UnityEngine.Assertions;
     using Object = UnityEngine.Object;
 
-    public static class DiffExtractor
+    internal static class DiffExtractor
     {
-        public static void ReplaceRefs(Transform trans, Transform rc, Transform r0)
+        internal static void ReplaceRefs(Transform trans, Transform rc, Transform r0)
         {
-            //Assert.IsTrue(trans == rc || trans.IsChildOf(rc));
             var comps = trans.GetComponents<Component>();
             foreach (var c in comps)
             {
-                var data = CompDataFactory.instance.GetComponentData(c);
-                if (data != null)
-                {
-                    var members = data.ListAttributedMembers();
-                    foreach (var m in members)
-                    {
-                        if (!m.attr.manual)
-                        {
-                            m.ReplaceRefs(c, rc, r0);
-                        }
-                    }
-                }
+                ReplaceRefs(c, rc, r0);
             }
             // Recursive call
             foreach (Transform child in trans)
@@ -40,12 +30,29 @@ namespace mulova.switcher
             }
         }
 
-        public static void CreateMissingChildren(IList<Transform> roots)
+        private static void ReplaceRefs(Component c, Transform rc, Transform r0)
         {
-            var union = GetChildUnion(roots);
-
-            foreach (var p in roots)
+            var data = CompDataFactory.instance.GetComponentData(c);
+            if (data != null)
             {
+                var members = data.ListAttributedMembers();
+                foreach (var m in members)
+                {
+                    if (!m.attr.manual)
+                    {
+                        m.ReplaceRefs(c, rc, r0);
+                    }
+                }
+            }
+        }
+
+        internal static void CreateMissingChildren(IList<Transform> parents, IList<Transform> roots)
+        {
+            var union = GetChildUnion(parents, roots);
+
+            for (int ip=0; ip<parents.Count; ++ip)
+            {
+                var p = parents[ip];
                 int insertIndex = 0;
                 for (int ic = 0; ic < union.Count; ++ic)
                 {
@@ -62,8 +69,8 @@ namespace mulova.switcher
                     }
                     if (found == null)
                     {
-                        var clone = CloneSibling(c.child, p, insertIndex);
-                        ReplaceRefs(clone, c.root, p);
+                        var clone = CloneSibling(c.comp, p, insertIndex);
+                        ReplaceRefs(clone, c.root, roots[ip]);
                         clone.gameObject.SetActive(false);
                         ++insertIndex;
                     }
@@ -71,24 +78,227 @@ namespace mulova.switcher
             }
 
             // sort children
-            for (int i=0; i<roots[0].childCount; ++i)
+            for (int i=0; i< parents[0].childCount; ++i)
             {
-                var c = roots[0].GetChild(i);
+                var c = parents[0].GetChild(i);
 
                 var childRoots = new List<Transform>();
-                for (int j=0; j < roots.Count; ++j)
+                for (int j=0; j < parents.Count; ++j)
                 {
-                    childRoots.Add(roots[j].GetChild(i));
+                    childRoots.Add(parents[j].GetChild(i));
                     if (j != 0)
                     {
-                        roots[j].Find(c.name).SetSiblingIndex(i);
+                        parents[j].Find(c.name).SetSiblingIndex(i);
                     }
                 }
-                CreateMissingChildren(childRoots);
+                CreateMissingChildren(childRoots, roots);
+            }
+
+            static List<RootNTransform> GetChildUnion(IList<Transform> parents, IList<Transform> roots)
+            {
+                Assert.AreEqual(parents.Count, roots.Count);
+                List<RootNTransform> union = new List<RootNTransform>();
+                for (int i = 0; i < parents[0].childCount; ++i)
+                {
+                    union.Add(new RootNTransform(roots[0], parents[0].GetChild(i)));
+                }
+
+                for (int ip = 1; ip < parents.Count; ++ip)
+                {
+                    var parent = parents[ip];
+                    var oldIndex = -1;
+                    for (int ic = 0; ic < parent.childCount; ++ic)
+                    {
+                        var c = parent.GetChild(ic);
+                        int index = union.FindIndex(t => t.name == c.name);
+                        if (index < 0)
+                        {
+                            // find next component index
+                            for (var ic2 = ic + 1; ic2 < parent.childCount && index < 0; ++ic2)
+                            {
+                                index = union.FindIndex(t => t.name == parent.GetChild(ic2).name);
+                            }
+                            if (index < 0)
+                            {
+                                index = union.Count;
+                                union.Add(new RootNTransform(roots[ip], c));
+                            }
+                            else
+                            {
+                                union.Insert(index, new RootNTransform(roots[ip], c));
+                            }
+                        }
+                        if (oldIndex > index)
+                        {
+                            var msg = $"Sibling order mismatch: {c.GetScenePath()}";
+                            Debug.LogError(msg, c);
+                            throw new System.Exception(msg);
+                        }
+                        oldIndex = index;
+                    }
+                }
+                return union;
+            }
+
+            static Transform CloneSibling(Transform src, Transform parent, int siblingIndex)
+            {
+                if (src == null)
+                {
+                    return null;
+                }
+                Transform clone;
+                if (PrefabUtility.IsAnyPrefabInstanceRoot(src.gameObject))
+                {
+                    var p = PrefabUtility.GetCorrespondingObjectFromOriginalSource(src.gameObject);
+                    clone = (PrefabUtility.InstantiatePrefab(p, parent) as GameObject).transform;
+                }
+                else
+                {
+                    clone = Object.Instantiate(src, parent, false);
+                }
+                clone.name = src.name;
+                Undo.RegisterCreatedObjectUndo(clone.gameObject, src.name);
+                clone.SetSiblingIndex(siblingIndex);
+                return clone;
             }
         }
 
-        public static List<ICompData>[] CreateDiff(GameObject[] roots)
+        internal static void CreateMissingComponent(IList<Transform> objs, IList<Transform> roots)
+        {
+            var union = GetComponentUnion(objs, roots);
+
+            for (int ip = 0; ip < objs.Count; ++ip)
+            {
+                var o = objs[ip];
+                int insertIndex = 0;
+                for (int ic = 0; ic < union.Count; ++ic)
+                {
+                    var c = union[ic];
+                    var comps = o.GetComponents<Behaviour>();
+                    // find matching component
+                    Component found = null;
+                    for (int i = 0; i < comps.Length && !found; ++i)
+                    {
+                        if (comps[i].GetType() == c.type)
+                        {
+                            insertIndex = i + 1;
+                            found = comps[i];
+                        }
+                    }
+                    if (found == null)
+                    {
+                        var clone = CloneComponent(c.comp, o, insertIndex);
+                        ReplaceRefs(clone, c.root, roots[ip]);
+                        clone.enabled = false;
+                        ++insertIndex;
+                    }
+                }
+            }
+
+            // sort children
+            for (int i = 0; i < objs[0].childCount; ++i)
+            {
+                var c = objs[0].GetChild(i);
+
+                var childRoots = new List<Transform>();
+                for (int j = 0; j < objs.Count; ++j)
+                {
+                    childRoots.Add(objs[j].GetChild(i));
+                    if (j != 0)
+                    {
+                        objs[j].Find(c.name).SetSiblingIndex(i);
+                    }
+                }
+                CreateMissingComponent(childRoots, roots);
+            }
+
+            static List<Behaviour> GetAllComponents(Transform t)
+            {
+                var all = t.GetComponents<Behaviour>();
+                var filtered = all.Where(c => c.GetType() != typeof(Switcher));
+                return filtered.ToList();
+            }
+
+            static List<RootNComp> GetComponentUnion(IList<Transform> objs, IList<Transform> roots)
+            {
+                Assert.AreEqual(objs.Count, roots.Count);
+                var all = GetAllComponents(objs[0]);
+                //var union = all.ConvertAll(c => new RootNComp(roots[0], c));
+                var u = new List<RootNComp>(all.Count);
+                foreach (var a in all)
+                {
+                    u.Add(new RootNComp(roots[0], a));
+                }
+
+                for (int ip = 1; ip < objs.Count; ++ip)
+                {
+                    var o = objs[ip];
+                    var comps = GetAllComponents(o);
+                    var oldIndex = -1;
+                    for (int ic = 0; ic < comps.Count; ++ic)
+                    {
+                        var c = comps[ic];
+                        int index = u.FindIndex(t => t.type == c.GetType());
+                        if (index < 0)
+                        {
+                            // find next component index
+                            for (var ic2 = ic + 1; ic2 < comps.Count && index < 0; ++ic2)
+                            {
+                                index = u.FindIndex(t => t.type == comps[ic2].GetType());
+                            }
+                            if (index < 0)
+                            {
+                                index = u.Count;
+                                u.Add(new RootNComp(roots[ip], c));
+                            }
+                            else
+                            {
+                                u.Insert(index, new RootNComp(roots[ip], c));
+                            }
+                        }
+                        if (oldIndex > index)
+                        {
+                            throw new System.Exception($"Component order mismatch: {c.transform.GetScenePath()}[{c.GetType().Name}]");
+                        }
+                        oldIndex = index;
+                    }
+                }
+                return u;
+            }
+
+            static Behaviour CloneComponent(Behaviour c, Transform obj, int compIndex)
+            {
+                if (c == null)
+                {
+                    return null;
+                }
+                if (PrefabUtility.IsPartOfAnyPrefab(c))
+                {
+                    throw new System.Exception($"Can't add Component in prefab instance: {c.transform.GetScenePath()}[{c.GetType().Name}]");
+                }
+                else
+                {
+                    var add = obj.gameObject.AddComponent(c.GetType());
+                    if (add == null)
+                    {
+                        var msg = $"Fail to add {c.GetType().Name} to {obj.transform.GetScenePath()}";
+                        Debug.LogError(msg, obj);
+                        throw new Exception(msg);
+                    }
+                    Behaviour clone = add as Behaviour;
+                    Undo.RegisterCreatedObjectUndo(clone.gameObject, c.GetType().Name);
+                    // change order
+                    var len = obj.GetComponents<Behaviour>().Length;
+                    for (int i=len-1; i>compIndex; --i)
+                    {
+                        UnityEditorInternal.ComponentUtility.MoveComponentUp(clone);
+                    }
+                    return clone;
+                }
+            }
+        }
+
+        internal static List<ICompData>[] CreateDiff(GameObject[] roots)
         {
             var trans = roots.ConvertAll(o => o.transform);
             var store = trans.ConvertAll(p => new List<ICompData>());
@@ -141,7 +351,7 @@ namespace mulova.switcher
             }
         }
 
-        public static bool GetDiffs(ICompData[] data)
+        internal static bool GetDiffs(ICompData[] data)
         {
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
@@ -202,7 +412,7 @@ namespace mulova.switcher
             return anyChanged;
         }
 
-        public static List<string> GetDuplicateSiblingNames(IList<GameObject> objs)
+        internal static List<string> GetDuplicateSiblingNames(IList<GameObject> objs)
         {
             List<string> dup = new List<string>();
             foreach (var o in objs)
@@ -230,7 +440,7 @@ namespace mulova.switcher
             }
         }
 
-        public static bool IsChildrenMatches(IList<Transform> objs)
+        internal static bool IsChildrenMatches(IList<Transform> objs)
         {
             int childCount = objs[0].childCount;
             for (int i = 1; i < objs.Count; ++i)
@@ -259,7 +469,7 @@ namespace mulova.switcher
             return true;
         }
 
-        public static bool IsComponentMatch(IList<Transform> objs)
+        internal static bool IsComponentMatch(IList<Transform> objs)
         {
             var passed = true;
             var comps = new List<Component>[objs.Count];
@@ -312,7 +522,7 @@ namespace mulova.switcher
             return passed;
         }
 
-        public static int GetSiblingIndex(string objName, Transform parent)
+        internal static int GetSiblingIndex(string objName, Transform parent)
         {
             for (int i = 0; i < parent.childCount; ++i)
             {
@@ -325,91 +535,6 @@ namespace mulova.switcher
             return -1;
         }
 
-        public static Transform CloneSibling(Transform src, Transform parent, int siblingIndex)
-        {
-            if (src == null)
-            {
-                return null;
-            }
-            Transform clone;
-            if (PrefabUtility.IsAnyPrefabInstanceRoot(src.gameObject))
-            {
-                var p = PrefabUtility.GetCorrespondingObjectFromOriginalSource(src.gameObject);
-                clone = (PrefabUtility.InstantiatePrefab(p, parent) as GameObject).transform;
-            } else
-            {
-                clone = Object.Instantiate(src, parent, false);
-            }
-            clone.name = src.name;
-            Undo.RegisterCreatedObjectUndo(clone.gameObject, src.name);
-            clone.SetSiblingIndex(siblingIndex);
-            return clone;
-        }
-
-        class RootNChild
-        {
-            public readonly Transform root;
-            public readonly Transform child;
-
-            public string name => child.name;
-
-            public RootNChild(Transform root, Transform child)
-            {
-                this.root = root;
-                this.child = child;
-            }
-
-        }
-        private static List<RootNChild> GetChildUnion(IList<Transform> parents)
-        {
-            List<Transform> sorted = new List<Transform>(parents);
-            sorted.Sort(SortByChildCount);
-
-            int SortByChildCount(Transform t1, Transform t2)
-            {
-                return t2.childCount - t1.childCount;
-            }
-
-            List<RootNChild> union = new List<RootNChild>();
-            for (int i=0; i < parents[0].childCount; ++i)
-            {
-                union.Add(new RootNChild (parents[0], parents[0].GetChild(i)));
-            }
-
-            for (int i=1; i<parents.Count; ++i)
-            {
-                var p = parents[i];
-                var oldIndex = -1;
-                for (int j = 0; j < p.childCount; ++j)
-                {
-                    var c = p.GetChild(j);
-                    int index = union.FindIndex(t => t.name == c.name);
-                    if (index < 0)
-                    {
-                        for (var k = j + 1; k < p.childCount && index < 0; ++k)
-                        {
-                            index = union.FindIndex(t => t.name == p.GetChild(k).name);
-                        }
-                        if (index < 0)
-                        {
-                            index = union.Count;
-                            union.Add(new RootNChild(p, c));
-                        }
-                        else
-                        {
-                            union.Insert(index, new RootNChild(p, c));
-                        }
-                    }
-                    if (oldIndex > index)
-                    {
-                        throw new System.Exception($"Sibling order mismatch: {c.GetScenePath()}");
-                    }
-                    oldIndex = index;
-                }
-            }
-            return union;
-        }
-
         internal static List<T>[] FindAll<T>(List<ICompData>[] diffs) where T : ICompData
         {
             var list = new List<T>[diffs.Length];
@@ -419,5 +544,31 @@ namespace mulova.switcher
             }
             return list;
         }
+    }
+
+    class RootNTransform : RnC<Transform>
+    {
+        internal RootNTransform(Transform root, Transform child) : base(root, child) { }
+    }
+
+    class RootNComp : RnC<Behaviour>
+    {
+        internal RootNComp(Transform root, Behaviour child) : base(root, child) { }
+    }
+
+    class RnC<T> where T: Component
+    {
+        internal readonly Transform root;
+        internal readonly T comp;
+
+        internal string name => comp.name;
+        internal Type type => comp.GetType();
+
+        internal RnC(Transform root, T child)
+        {
+            this.root = root;
+            this.comp = child;
+        }
+
     }
 }

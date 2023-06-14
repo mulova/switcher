@@ -44,14 +44,16 @@ namespace mulova.switcher
             (c as Transform).hasChanged = true;
         }
 
-        protected override void CollectMember(MemberControl m, Component c)
+        protected override void CollectValue(MemberControl m, Component c)
         {
-            if (m.name == nameof(enabled))
+            switch (m.name)
             {
-                enabled = c.gameObject.activeSelf;
-            } else
-            {
-                base.CollectMember(m, c);
+                case nameof(enabled):
+                    enabled = c.gameObject.activeSelf;
+                    break;
+                default:
+                    base.CollectValue(m, c);
+                    break;
             }
         }
 

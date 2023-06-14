@@ -56,7 +56,14 @@ namespace mulova.switcher
 
         public static Transform GetHierarchyPair(this Transform t, Transform root, Transform targetRoot)
         {
-            Assert.IsTrue(t.IsChildOf(root));
+            if (t == root)
+            {
+                return targetRoot;
+            }
+            if (!t.IsChildOf(root))
+            {
+                return null;
+            }
             var hierarchy = new List<int>();
             while (t != root && t != null)
             {

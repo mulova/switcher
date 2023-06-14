@@ -316,10 +316,9 @@ namespace mulova.switcher
 
                 Apply(comp, val);
             }
-            catch
+            catch (Exception ex)
             {
-                Debug.LogErrorFormat("{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
-                throw;
+                Debug.LogErrorFormat("Fail to replace reference: {0} {1}.{2}\n{3}", comp.transform.GetScenePath(), storeField.ReflectedType.FullName, storeField.Name, ex);
             }
         }
     }

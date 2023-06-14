@@ -70,13 +70,15 @@ namespace mulova.switcher
             });
         }
 
-        protected override void CollectMember(MemberControl m, Component c)
+        protected override bool IsCollectable(MemberControl m, Component c)
         {
-            if (m.name == nameof(localPosition))
+            switch (m.name)
             {
-                return;
+                case nameof(localPosition):
+                    return false;
+                default:
+                    return true;
             }
-            base.CollectMember(m, c);
         }
     }
 }

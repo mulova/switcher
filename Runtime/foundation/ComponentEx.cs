@@ -13,7 +13,6 @@ namespace mulova.switcher
     {
         public static Component GetHierarchyPair(this Component c, Transform root, Transform targetRoot)
         {
-            Assert.IsTrue(c.transform.IsChildOf(root));
             var match = c.transform.GetHierarchyPair(root, targetRoot);
             if (match != null)
             {

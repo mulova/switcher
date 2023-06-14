@@ -64,7 +64,10 @@ namespace mulova.switcher
                 {
                     Undo.DestroyObjectImmediate(selected[i]);
                 }
-                selected[0].GetComponent<Switcher>().SpreadOut(rootData, false);
+                if (!SwitcherConfig.instance.deleteCases)
+                {
+                    selected[0].GetComponent<Switcher>().SpreadOut(rootData, false);
+                }
                 Selection.activeGameObject = selected[0];
             } else
             {
@@ -118,13 +121,14 @@ namespace mulova.switcher
             }
             else
             {
-                var parents = roots.ConvertAll(o => o.transform);
-                DiffExtractor.CreateMissingChildren(parents);
-                for (int i=1; i < parents.Count; ++i)
+                var rootTrans = roots.ConvertAll(o => o.transform);
+                DiffExtractor.CreateMissingChildren(rootTrans, rootTrans);
+                DiffExtractor.CreateMissingComponent(rootTrans, rootTrans);
+                for (int i=1; i < rootTrans.Count; ++i)
                 {
-                    DiffExtractor.ReplaceRefs(parents[i].transform, parents[i].transform, parents[0].transform);
+                    DiffExtractor.ReplaceRefs(rootTrans[i], rootTrans[i], rootTrans[0]);
                 }
-                if (DiffExtractor.IsComponentMatch(parents))
+                if (DiffExtractor.IsComponentMatch(rootTrans))
                 {
                     Undo.RecordObjects(roots.ToArray(), "Diff");
                     MakeRootsActive(roots);
