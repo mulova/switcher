@@ -17,7 +17,7 @@ namespace mulova.switcher
     {
         public List<Case> cases = new List<Case>();
         [SerializeField, HideInInspector] public List<SwitchPreset> preset = new List<SwitchPreset>();
-        [HideInInspector, SerializeField, EnumType] public string enumType = "";
+        [HideInInspector, SerializeField, EnumType] private string enumType = "";
         [HideInInspector] public bool caseSensitive = true;
 
         private HashSet<string> keySet = new HashSet<string>();
@@ -340,9 +340,31 @@ namespace mulova.switcher
                     if (keys.Count != intersect.Count())
                     {
                         throw new Exception("Switcher keys missing");
+                    } else
+                    {
+                        SetEnumType(type);
                     }
                 }
             }
+        }
+
+        public void SetEnumType(Type type)
+        {
+            enumType = type.FullName;
+
+            var keys = Enum.GetNames(type);
+            if (cases.Count != keys.Length)
+            {
+                Debug.LogError("Case count must be "+keys.Length);
+            }
+            else
+            {
+                for (int i=0; i<keys.Length; ++i)
+                {
+                    cases[i].name = keys[i];
+                }
+            }
+            UnityEditor.EditorUtility.SetDirty(this);
         }
 #endif
     }
