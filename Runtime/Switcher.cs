@@ -17,7 +17,7 @@ namespace mulova.switcher
     {
         public List<Case> cases = new List<Case>();
         [SerializeField, HideInInspector] public List<SwitchPreset> preset = new List<SwitchPreset>();
-        [HideInInspector][SerializeField, EnumType] private string enumType = "";
+        [HideInInspector, SerializeField, EnumType] public string enumType = "";
         [HideInInspector] public bool caseSensitive = true;
 
         private HashSet<string> keySet = new HashSet<string>();
@@ -130,7 +130,7 @@ namespace mulova.switcher
             }
         }
 
-        public void SetAction(object key, UnityAction action)
+        public void SetAction(object key, UnityAction<string> action)
         {
             string k = NormalizeKey(key);
             Case c = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
@@ -145,7 +145,7 @@ namespace mulova.switcher
             }
         }
 
-        public void AddAction(object key, UnityAction action)
+        public void AddAction(object key, UnityAction<string> action)
         {
             string k = NormalizeKey(key);
             Case s = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
@@ -258,7 +258,7 @@ namespace mulova.switcher
                             }
 #endif
                         }
-                        c.action?.Invoke();
+                        c.action?.Invoke(c.name);
                     }
                     catch (Exception ex)
                     {
