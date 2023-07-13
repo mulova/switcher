@@ -98,7 +98,7 @@ namespace mulova.switcher
             var bounds = bound.SplitByWidths((int)EditorGUIUtility.labelWidth, (int)(bound.width - EditorGUIUtility.labelWidth) / 2);
             EditorGUI.LabelField(bounds[0], p.displayName);
             var textStyle = type != null ? EditorStyles.toolbarTextField : EditorStyles.textField;
-            p.stringValue = EditorGUI.TextField(bounds[1], p.stringValue, textStyle);
+            p.stringValue = EditorGUI.DelayedTextField(bounds[1], p.stringValue, textStyle);
             if (typeName != p.stringValue && p.stringValue.Length > 0)
             {
                 typeName = p.stringValue;

@@ -52,11 +52,7 @@ namespace mulova.switcher
             {
                 using (var s = new EditorGUI.ChangeCheckScope())
                 {
-                    EditorGUI.DelayedTextField(nameBounds[0], n, new GUIContent(""));
-                    if (s.changed)
-                    {
-                        rename = false;
-                    }
+                    EditorGUI.PropertyField(nameBounds[0], n, new GUIContent(""));
                 }
             } else
             {

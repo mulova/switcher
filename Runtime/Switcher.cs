@@ -315,14 +315,6 @@ namespace mulova.switcher
             showMisc = !showMisc;
         }
 
-#if SERIALIZE_REFERENCE_EXT
-        [ContextMenu("Toggle ShowData")]
-        private void ToggleData()
-        {
-            showData = !showData;
-        }
-#endif
-
         private void OnValidate()
         {
             if (!string.IsNullOrWhiteSpace(enumType))

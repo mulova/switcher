@@ -430,11 +430,14 @@ namespace mulova.switcher
                 HashSet<string> names = new HashSet<string>();
                 foreach (Transform child in parent)
                 {
-                    if (!names.Add(child.name))
+                    if ((child.gameObject.hideFlags & HideFlags.HideAndDontSave) != 0)
                     {
-                        d.Add(child.name);
+                        if (!names.Add(child.name))
+                        {
+                            d.Add(child.name);
+                        }
+                        d.AddRange(GetDuplicateSiblingNames(child));
                     }
-                    d.AddRange(GetDuplicateSiblingNames(child));
                 }
                 return d;
             }

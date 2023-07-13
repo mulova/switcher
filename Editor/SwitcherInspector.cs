@@ -168,8 +168,23 @@ namespace mulova.switcher
 
             if (switcher.showMisc || isMultiple)
             {
-                EditorGUILayout.PropertyField(enumType);
-                EditorGUILayout.PropertyField(caseSensitive);
+                using (var c = new EditorGUI.ChangeCheckScope())
+                {
+                    EditorGUILayout.PropertyField(enumType);
+                    if (c.changed)
+                    {
+                        serializedObject.ApplyModifiedProperties();
+                        CaseDrawer.rename = true;
+                    }
+                }
+                using (var c = new EditorGUI.ChangeCheckScope())
+                {
+                    EditorGUILayout.PropertyField(caseSensitive);
+                    if (c.changed)
+                    {
+                        serializedObject.ApplyModifiedProperties();
+                    }
+                }
             }
         }
     }
