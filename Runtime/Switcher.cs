@@ -262,7 +262,7 @@ namespace mulova.switcher
                     }
                     catch (Exception ex)
                     {
-                        log.LogFormat(LogType.Error, "{0}({1})n{2}", c.name, name, ex);
+                        log.LogFormat(LogType.Error, this, "{0}({1})\n{2}", c.name, name, ex);
                     }
                 }
             }
@@ -273,7 +273,7 @@ namespace mulova.switcher
             //}
             if (match != keySet.Count)
             {
-                log.LogFormat(LogType.Error, "Missing key exists among {0}", string.Join('.', keySet));
+                log.LogFormat(LogType.Error, this, "Missing key exists among {0}", string.Join('.', keySet));
             }
         }
 
@@ -326,15 +326,17 @@ namespace mulova.switcher
                     var all = Enum.GetNames(type);
                     if (keys.Count != all.Length)
                     {
-                        throw new Exception("Switcher keys missing");
-                    }
-                    var intersect = keys.Intersect(all);
-                    if (keys.Count != intersect.Count())
-                    {
-                        throw new Exception("Switcher keys missing");
+                        Debug.LogError($"Switcher keys missing ({enumType})", this);
                     } else
                     {
-                        SetEnumType(type);
+                        var intersect = keys.Intersect(all);
+                        if (keys.Count != intersect.Count())
+                        {
+                            Debug.LogError($"Switcher keys mismatch ({enumType})", this);
+                        } else
+                        {
+                            SetEnumType(type);
+                        }
                     }
                 }
             }
@@ -347,13 +349,13 @@ namespace mulova.switcher
             var keys = Enum.GetNames(type);
             if (cases.Count != keys.Length)
             {
-                Debug.LogError("Case count must be "+keys.Length);
+                Debug.LogError($"Case count must be {keys.Length} but {cases.Count}", this);
             }
             else
             {
                 for (int i=0; i<keys.Length; ++i)
                 {
-                    cases[i].name = keys[i];
+                    cases[i].name = keys[i].ToString();
                 }
             }
             UnityEditor.EditorUtility.SetDirty(this);
