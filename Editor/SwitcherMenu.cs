@@ -42,7 +42,7 @@ namespace mulova.switcher
                 return;
             }
             runFrame = Time.frameCount;
-
+            /*
             foreach (var o in selected)
             {
                 if (PrefabUtility.IsPartOfPrefabInstance(o))
@@ -51,7 +51,7 @@ namespace mulova.switcher
                     return;
                 }
             }
-
+            */
 
             var rootData = new List<RootData>();
             if (CreateSwitcher(selected))

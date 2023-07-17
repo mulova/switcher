@@ -27,6 +27,7 @@ namespace mulova.switcher
         public bool hasAction => cases.Exists(s => s.hasAction);
         public bool showData { get; set; } = false; // editor only. needs SerializeReferenceExtensions
         public bool showMisc { get; set; } = false;
+        public string enumTypeName => enumType;
 
         private ILogger log => Debug.unityLogger;
 

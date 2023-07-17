@@ -308,11 +308,19 @@ namespace mulova.switcher
 
         private static void GetDiffRecursively(Transform[] roots, Transform[] current, List<ICompData>[] store, int depth)
         {
-            if (roots[0].TryGetComponent<IgnoreSwitch>(out _) || (depth > 0 && current[0].TryGetComponent<Switcher>(out _))) // No diff extracted for the child switcher
+            if (roots[0].TryGetComponent<IgnoreSwitch>(out _))
             {
                 return;
             }
-            var comps = current.ConvertAll(p => p.GetComponents<Component>().FindAll(c=> !(c is Switcher) && (depth != 0 || !(c is Transform))).ToArray());
+            var isNestedSwitcher = depth > 0 && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
+            Component[][] comps = null;
+            if (isNestedSwitcher)
+            {
+                comps = current.ConvertAll(p => new Component[] { p.GetComponent<Transform>()});
+            } else
+            {
+                comps = current.ConvertAll(p => p.GetComponents<Component>().FindAll(c=> !(c is Switcher) && (depth != 0 || !(c is Transform))).ToArray());
+            }
             for (int i = 0; i < comps[0].Length; ++i)
             {
                 GetMatchingComponentDiff(roots, comps, i, store);
