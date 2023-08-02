@@ -27,11 +27,11 @@ namespace mulova.switcher
 
         public override Type srcType => typeof(RectTransform);
 
-        protected override void ApplyMember(MemberControl m, Component c)
+        public override void SetValue(MemberControl m, Component c, object val)
         {
             if (m.memberType == typeof(bool) && m.name == nameof(enabled))
             {
-                c.gameObject.SetActive(enabled);
+                c.gameObject.SetActive((bool)val);
             }
             else if (m.memberType == typeof(Vector3) && m.name == nameof(localPosition))
             {
@@ -46,7 +46,7 @@ namespace mulova.switcher
             }
             else
             {
-                base.ApplyMember(m, c);
+                base.SetValue(m, c, val);
                 (c as RectTransform).hasChanged = true;
             }
         }

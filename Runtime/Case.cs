@@ -19,7 +19,7 @@ namespace mulova.switcher
     [Serializable]
     public class Case : ICloneable
     {
-        [SerializeReference] public List<ICompData> data = new List<ICompData>();
+        [SerializeReference] public List<CompData> data = new List<CompData>();
         public SwitcherEvent action;
         [EnumPopup("enumType")] public string name;
 
@@ -34,11 +34,16 @@ namespace mulova.switcher
             }
         }
 
+        public bool IsApplied()
+        {
+            return data.TrueForAll(d => d.IsApplied());
+        }
+
         public object Clone()
         {
             Case c = new Case();
             c.name = this.name;
-            c.data = new List<ICompData>(data);
+            c.data = new List<CompData>(data);
             return c;
         }
 

@@ -78,7 +78,7 @@ namespace mulova.switcher
                     }
                 }
             }
-            //GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(switcher); // Prevent information lost because collected ICompData.target values are lost when the prefab is applied.
+            //GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(switcher); // Prevent information lost because collected CompData.target values are lost when the prefab is applied.
             if (EditorGUI.DropdownButton(nameBounds[1], new GUIContent("Options"), FocusType.Passive))
             {
 
@@ -128,7 +128,7 @@ namespace mulova.switcher
 
             if (switcher.showData)
             {
-                // Draw ICompData
+                // Draw CompData
                 var dataBounds = boundsLeft.SplitByHeights(dataHeight);
                 boundsLeft = dataBounds[1];
                 var dataProperty = p.FindPropertyRelative("data");

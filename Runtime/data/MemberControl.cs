@@ -16,7 +16,7 @@ namespace mulova.switcher
     {
         private readonly FieldInfo srcField;
         private readonly PropertyInfo srcProperty;
-        private readonly FieldInfo storeField;
+        internal readonly FieldInfo storeField;
         private readonly FieldInfo storeModField;
         public string name => storeField.Name;
         public bool isCustom => srcField == null && srcProperty == null;
@@ -59,12 +59,12 @@ namespace mulova.switcher
             }
         }
 
-        public bool HasChanged(ICompData store)
+        public bool HasChanged(CompData store)
         {
             return storeModField == null || (bool)storeModField.GetValue(store);
         }
 
-        public void SetChanged(ICompData store, bool changed)
+        public void SetChanged(CompData store, bool changed)
         {
             storeModField?.SetValue(store, changed);
         }
@@ -95,7 +95,7 @@ namespace mulova.switcher
             }
         }
 
-        public void StoreValue(ICompData store, object val)
+        public void StoreValue(CompData store, object val)
         {
             try
             {
@@ -104,38 +104,6 @@ namespace mulova.switcher
             catch (Exception ex)
             {
                 Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="store"></param>
-        /// <param name="src"></param>
-        public void Collect(ICompData store, Component src)
-        {
-            try
-            {
-                var val = GetValue(src);
-                StoreValue(store, val);
-            }
-            catch
-            {
-                Debug.LogErrorFormat("{0}.{1}", storeField.ReflectedType.FullName, storeField.Name);
-                throw;
-            }
-        }
-
-        public object GetValue(ICompData store)
-        {
-            try
-            {
-                return storeField.GetValue(store);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogErrorFormat("{0}.{1}\n{2}", storeField.ReflectedType.FullName, storeField.Name, ex);
-                throw;
             }
         }
 
@@ -158,20 +126,7 @@ namespace mulova.switcher
                 {
                     log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2} stored value: {3}", target.name, storeModField.DeclaringType.Name, storeModField.Name, val);
                 }
-                if (srcField != null)
-                {
-                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2}={3}", target.name, srcField.DeclaringType.Name, srcField.Name, val);
-                    srcField.SetValue(target, val);
-                }
-                else if (srcProperty != null)
-                {
-                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2}={3}", target.name, srcProperty.DeclaringType.Name, srcProperty.Name, val);
-                    srcProperty.SetValue(target, val);
-                }
-                else
-                {
-                    throw new Exception($"'{storeField.Name}' is custom field. Override CompData.Collect(), CompData.Apply() methods");
-                }
+                Apply(target, val);
             }
             catch (Exception ex)
             {
@@ -189,10 +144,12 @@ namespace mulova.switcher
             {
                 if (srcField != null)
                 {
+                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2}={3}", target.name, srcField.DeclaringType.Name, srcField.Name, value);
                     srcField.SetValue(target, value);
                 }
                 else if (srcProperty != null)
                 {
+                    log?.LogFormat(LogType.Log, target, "[{0}] {1}.{2}={3}", target.name, srcProperty.DeclaringType.Name, srcProperty.Name, value);
                     srcProperty.SetValue(target, value);
                 }
                 else
@@ -246,30 +203,24 @@ namespace mulova.switcher
                             }
                         }
 #endif
-                        if (a.manual)
+                        var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
+                        if (member.Length > 0)
                         {
-                            var slot = new MemberControl(f, isModField, a);
-                            list.Add(slot);
-                        }
-                        else
-                        {
-                            var member = srcType.GetMember(f.Name, INSTANCE_FLAGS);
-                            if (member.Length > 0)
+                            if (member[0] is PropertyInfo p && (!p.CanRead || !p.CanWrite))
                             {
-                                if (member[0] is PropertyInfo p && (!p.CanRead || !p.CanWrite))
-                                {
-                                    Debug.LogErrorFormat("{0}.{1} is not readable / writable", srcType.FullName, f.Name);
-                                }
-                                else
-                                {
-                                    var slot = new MemberControl(member[0], f, isModField, a);
-                                    list.Add(slot);
-                                }
+                                Debug.LogErrorFormat("{0}.{1} is not readable / writable", srcType.FullName, f.Name);
                             }
                             else
                             {
-                                Debug.LogErrorFormat("{0}.{1} field/property is missing", srcType.FullName, f.Name);
+                                var slot = new MemberControl(member[0], f, isModField, a);
+                                list.Add(slot);
                             }
+                        }
+                        else
+                        {
+                            var slot = new MemberControl(f, isModField, a);
+                            list.Add(slot);
+                            Debug.LogFormat("Custom member {0}.{1}", srcType.FullName, f.Name);
                         }
                     }
                 }
@@ -277,49 +228,6 @@ namespace mulova.switcher
                 cache[srcType] = list;
             }
             return list;
-        }
-
-        /// <param name="rc">root of the current case</param>
-        /// <param name="r0">root of the first case</param>
-        public void ReplaceRefs(Component comp, Transform rc, Transform r0)
-        {
-            try
-            {
-                var val = GetValue(comp);
-                if (val != null && rc != r0)
-                {
-                    if (IsTypeOf(typeof(UnityEventBase)))
-                    {
-                        var e = val as UnityEventBase;
-                        e.ReplaceMatchingTarget(rc, r0);
-                    }
-                    else if (IsTypeOf(typeof(Component)))
-                    {
-                        var c = val as Component;
-                        var match = c.GetHierarchyPair(rc, r0);
-                        if (match != null)
-                        {
-                            val = match;
-                        }
-                    }
-                    else if (IsTypeOf(typeof(GameObject)))
-                    {
-                        var o = val as GameObject;
-                        var t = o.transform;
-                        var match = t.GetHierarchyPair(rc, r0);
-                        if (match != null)
-                        {
-                            val = match.gameObject;
-                        }
-                    }
-                }
-
-                Apply(comp, val);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogErrorFormat("Fail to replace reference: {0} {1}.{2}\n{3}", comp.transform.GetScenePath(), storeField.ReflectedType.FullName, storeField.Name, ex);
-            }
         }
     }
 }

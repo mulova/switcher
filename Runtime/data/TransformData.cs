@@ -7,6 +7,7 @@
 namespace mulova.switcher
 {
     using System;
+    using System.Reflection;
     using UnityEngine;
 
     [Serializable]
@@ -18,7 +19,7 @@ namespace mulova.switcher
         [HideInInspector] public bool localRotation_mod;
         [Store] public Vector3 localScale;
         [HideInInspector] public bool localScale_mod;
-        [Store(manual:true)] public bool enabled;
+        [Store] public bool enabled;
         [HideInInspector] public bool enabled_mod;
 
         [SerializeField] protected Transform _target;
@@ -32,28 +33,37 @@ namespace mulova.switcher
             set { _target = value as Transform; }
         }
 
-        protected override void ApplyMember(MemberControl m, Component c)
+        public override void SetValue(MemberControl m, Component c, object val)
         {
             if (m.memberType == typeof(bool) && m.name == nameof(enabled))
             {
-                c.gameObject.SetActive(enabled);
+                c.gameObject.SetActive((bool)val);
             } else
             {
-                base.ApplyMember(m, c);
+                base.SetValue(m, c, val);
             }
             (c as Transform).hasChanged = true;
         }
 
-        protected override void CollectValue(MemberControl m, Component c)
+        public override object GetValueFrom(MemberControl m, Component c)
         {
             switch (m.name)
             {
                 case nameof(enabled):
-                    enabled = c.gameObject.activeSelf;
-                    break;
+                    return c.gameObject.activeSelf;
                 default:
-                    base.CollectValue(m, c);
-                    break;
+                    return base.GetValueFrom(m, c);
+            }
+        }
+
+        public override object GetValue(MemberControl m)
+        {
+            if (m.memberType == typeof(bool) && m.name == nameof(enabled))
+            {
+                return enabled;
+            } else
+            {
+                return base.GetValue(m);
             }
         }
 

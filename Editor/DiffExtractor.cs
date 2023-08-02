@@ -35,14 +35,7 @@ namespace mulova.switcher
             var data = CompDataFactory.instance.GetComponentData(c);
             if (data != null)
             {
-                var members = data.ListAttributedMembers();
-                foreach (var m in members)
-                {
-                    if (!m.attr.manual)
-                    {
-                        m.ReplaceRefs(c, rc, r0);
-                    }
-                }
+                data.ReplaceRefs(c, rc, r0);
             }
         }
 
@@ -298,15 +291,15 @@ namespace mulova.switcher
             }
         }
 
-        internal static List<ICompData>[] CreateDiff(GameObject[] roots)
+        internal static List<CompData>[] CreateDiff(GameObject[] roots)
         {
             var trans = roots.ConvertAll(o => o.transform);
-            var store = trans.ConvertAll(p => new List<ICompData>());
+            var store = trans.ConvertAll(p => new List<CompData>());
             GetDiffRecursively(trans, trans, store, 0);
             return store;
         }
 
-        private static void GetDiffRecursively(Transform[] roots, Transform[] current, List<ICompData>[] store, int depth)
+        private static void GetDiffRecursively(Transform[] roots, Transform[] current, List<CompData>[] store, int depth)
         {
             if (roots[0].TryGetComponent<IgnoreSwitch>(out _))
             {
@@ -338,9 +331,9 @@ namespace mulova.switcher
         /// </summary>
         /// <returns>The diff.</returns>
         /// <param name="comps">return Component data if all components' data are the same.</param>
-        private static void GetMatchingComponentDiff(Transform[] roots, Component[][] comps, int index, List<ICompData>[] store)
+        private static void GetMatchingComponentDiff(Transform[] roots, Component[][] comps, int index, List<CompData>[] store)
         {
-            var arr = new ICompData[comps.Length];
+            var arr = new CompData[comps.Length];
             for (int i = 0; i < arr.Length; ++i)
             {
                 arr[i] = CompDataFactory.instance.GetComponentData(comps[i][index]);
@@ -359,7 +352,7 @@ namespace mulova.switcher
             }
         }
 
-        internal static bool GetDiffs(ICompData[] data)
+        internal static bool GetDiffs(CompData[] data)
         {
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
@@ -368,7 +361,7 @@ namespace mulova.switcher
             foreach (var m in members)
             {
                 var changed = false;
-                var v0 = m.GetValue(data[0]);
+                var v0 = data[0].GetValue(m);
                 for (int i = 1; i < data.Length && !changed; ++i)
                 {
                     var active = data[i].target.gameObject.activeInHierarchy;
@@ -376,7 +369,7 @@ namespace mulova.switcher
                     {
                         continue;
                     }
-                    var vi = m.GetValue(data[i]);
+                    var vi = data[i].GetValue(m);
                     if (isTransform && !active && m.name != "enabled") // ignore inactive transform values except GameObject.active
                     {
                         continue;
@@ -546,7 +539,7 @@ namespace mulova.switcher
             return -1;
         }
 
-        internal static List<T>[] FindAll<T>(List<ICompData>[] diffs) where T : ICompData
+        internal static List<T>[] FindAll<T>(List<CompData>[] diffs) where T : CompData
         {
             var list = new List<T>[diffs.Length];
             for (int i=0; i<diffs.Length; ++i)

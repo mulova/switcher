@@ -16,12 +16,12 @@ namespace mulova.switcher
         internal static CompDataFactory instance = new CompDataFactory();
         private Dictionary<Type, Type> pool;
 
-        public ICompData GetComponentData(Component c)
+        public CompData GetComponentData(Component c)
         {
             var dataType = FindDataType(c.GetType());
             if (dataType != null)
             {
-                var o = Activator.CreateInstance(dataType) as ICompData;
+                var o = Activator.CreateInstance(dataType) as CompData;
                 o.Collect(c, false);
                 return o;
             }
@@ -37,14 +37,14 @@ namespace mulova.switcher
             if (pool == null)
             {
                 pool = new Dictionary<Type, Type>();
-                List<Type> cls = typeof(ICompData).FindTypes();
+                List<Type> cls = typeof(CompData).FindTypes();
                 foreach (Type t in cls)
                 {
                     if (!t.IsAbstract)
                     {
                         try
                         {
-                            var ins = Activator.CreateInstance(t) as ICompData;
+                            var ins = Activator.CreateInstance(t) as CompData;
                             pool[ins.srcType] = t;
                         } catch
                         {

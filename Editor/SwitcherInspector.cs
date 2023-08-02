@@ -21,6 +21,22 @@ namespace mulova.switcher
         private SerializedProperty enumType;
         private SerializedProperty caseSensitive;
 
+        private void OnEnable()
+        {
+            switcher = (Switcher)target;
+            hasPreset = switcher.preset.Count > 0;
+            showPreset = false;
+            enumType = serializedObject.FindProperty("enumType");
+            caseSensitive = serializedObject.FindProperty("caseSensitive");
+            foreach (var c in switcher.cases)
+            {
+                if (c.IsApplied())
+                {
+                    activeSet.Add(c.name);
+                }
+            }
+        }
+
         internal static bool IsPreset(IList<string> actives)
         {
             if (activeSet.Count != actives.Count)
@@ -61,15 +77,6 @@ namespace mulova.switcher
         internal static bool IsActive(string active)
         {
             return activeSet.Contains(active);
-        }
-
-        private void OnEnable()
-        {
-            switcher = (Switcher)target;
-            hasPreset = switcher.preset.Count > 0;
-            showPreset = false;
-            enumType = serializedObject.FindProperty("enumType");
-            caseSensitive = serializedObject.FindProperty("caseSensitive");
         }
 
         private void OnDisable()

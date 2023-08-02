@@ -31,14 +31,6 @@ namespace mulova.switcher
 
         private ILogger log => Debug.unityLogger;
 
-        private void Start()
-        {
-            if (cases.Count > 0 && keySet.Count == 0)
-            {
-                Apply(0);
-            }
-        }
-
         public void ResetKeys()
         {
             keySet.Clear();
@@ -50,7 +42,7 @@ namespace mulova.switcher
             return keySet.Contains(s);
         }
 
-        public bool Is(params object[] keys)
+        public bool IsKeys(params object[] keys)
         {
             var count = keys?.Length ?? 0;
             if (count == keySet.Count)
@@ -77,7 +69,7 @@ namespace mulova.switcher
             {
                 return false;
             }
-            return Is(p.keys);
+            return IsKeys(p.keys);
         }
 
         public void SetPreset(object key)
@@ -102,7 +94,7 @@ namespace mulova.switcher
             }
         }
 
-        public void Add(params object[] keys)
+        public void AddKey(params object[] keys)
         {
             foreach (object o in keys)
             {
@@ -110,7 +102,7 @@ namespace mulova.switcher
             }
         }
 
-        public void Remove(params object[] keys)
+        public void RemoveKeys(params object[] keys)
         {
             foreach (object o in keys)
             {
@@ -118,7 +110,7 @@ namespace mulova.switcher
             }
         }
 
-        public void Toggle(object key)
+        public void ToggleKey(object key)
         {
             string k = NormalizeKey(key);
             if (keySet.Contains(k))
@@ -217,13 +209,13 @@ namespace mulova.switcher
         /// <param name="keysOrIndex">can be key (string) or index (int) </param>
         public void Apply(params object[] keysOrIndex)
         {
-            if (Is(keysOrIndex))
+            if (IsKeys(keysOrIndex))
             {
                 //log.Debug("Already set");
                 return;
             }
             ResetKeys();
-            Add(keysOrIndex);
+            AddKey(keysOrIndex);
             Apply();
         }
 

@@ -12,7 +12,7 @@ namespace mulova.switcher
     using UnityEngine.Events;
 
     [Serializable]
-    public abstract class CompData : ICompData
+    public abstract class CompData
     {
         public abstract Type srcType { get; }
         public abstract bool active { get; }
@@ -25,15 +25,47 @@ namespace mulova.switcher
             {
                 if (m.HasChanged(this))
                 {
-                    ApplyMember(m, c);
+                    SetValue(m, c);
                 }
             }
         }
 
-        protected virtual void ApplyMember(MemberControl m, Component target)
+        public bool IsApplied()
         {
-            m.Apply(target, this);
+            var members = ListAttributedMembers();
+            foreach (var m in members)
+            {
+                if (m.HasChanged(this))
+                {
+                    var v1 = GetValueFrom(m, target);
+                    var v2 = GetValue(m);
+                    if (!MemberEquals(m, v1, v2))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
+
+        public virtual object GetValue(MemberControl m)
+        {
+            try
+            {
+                return m.storeField.GetValue(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogErrorFormat("{0}.{1}\n{2}", m.memberType.FullName, m.name, ex);
+                throw;
+            }
+        }
+
+        public virtual object GetValueFrom(MemberControl m, Component c) => m.GetValue(c);
+
+        public virtual void SetValue(MemberControl m, Component c, object value) => m.Apply(c, value);
+
+        public void SetValue(MemberControl m, Component c) => SetValue(m, c, GetValue(m));
 
         public virtual void Collect(Component src, bool changedOnly)
         {
@@ -45,25 +77,22 @@ namespace mulova.switcher
                 {
                     if (IsCollectable(m, src))
                     {
-                        CollectValue(m, src);
+                        try
+                        {
+                            var val = GetValueFrom(m, src);
+                            m.StoreValue(this, val);
+                        }
+                        catch
+                        {
+                            Debug.LogErrorFormat("{0}.{1}", m.storeField.ReflectedType.FullName, m.storeField.Name);
+                            throw;
+                        }
                     }
                 }
             }
         }
 
         protected virtual bool IsCollectable(MemberControl m, Component c) => true;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="m"></param>
-        /// <param name="c">the component to collect data</param>
-        /// <param name="r0">the first root</param>
-        /// <param name="ri">the i th root</param>
-        protected virtual void CollectValue(MemberControl m, Component c)
-        {
-            m.Collect(this, c);
-        }
 
         public override bool Equals(object obj)
         {
@@ -72,8 +101,8 @@ namespace mulova.switcher
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
-                var val1 = m.GetValue(this);
-                var val2 = m.GetValue(that);
+                var val1 = this.GetValue(m);
+                var val2 = that.GetValue(m);
                 if (val1 == null ^ val2 == null)
                 {
                     return false;
@@ -118,7 +147,7 @@ namespace mulova.switcher
 
         public override int GetHashCode() => target != null ? target.GetHashCode() : base.GetHashCode();
 
-        public override string ToString() => target != null ? target.ToString() : null;
+        public override string ToString() => target != null ? $"{target.name} ({srcType.Name})" : srcType.Name;
 
         /// <summary>
         /// 
@@ -141,6 +170,51 @@ namespace mulova.switcher
         public MemberControl GetMember(string name)
         {
             return ListAttributedMembers().Find(m => m.name == name);
+        }
+
+        public void ReplaceRefs(Component comp, Transform rc, Transform r0)
+        {
+            var members = ListAttributedMembers();
+            foreach (var m in members)
+            {
+                try
+                {
+                    var val = GetValueFrom(m, comp);
+                    if (val != null && rc != r0)
+                    {
+                        if (m.IsTypeOf(typeof(UnityEventBase)))
+                        {
+                            var e = val as UnityEventBase;
+                            e.ReplaceMatchingTarget(rc, r0);
+                        }
+                        else if (m.IsTypeOf(typeof(Component)))
+                        {
+                            var c = val as Component;
+                            var match = c.GetHierarchyPair(rc, r0);
+                            if (match != null)
+                            {
+                                val = match;
+                            }
+                        }
+                        else if (m.IsTypeOf(typeof(GameObject)))
+                        {
+                            var o = val as GameObject;
+                            var t = o.transform;
+                            var match = t.GetHierarchyPair(rc, r0);
+                            if (match != null)
+                            {
+                                val = match.gameObject;
+                            }
+                        }
+                    }
+
+                    SetValue(m, comp, val);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogErrorFormat("Fail to replace reference: {0} {1}.{2}\n{3}", comp.transform.GetScenePath(), m.storeField.ReflectedType.FullName, m.storeField.Name, ex);
+                }
+            }
         }
     }
 }
