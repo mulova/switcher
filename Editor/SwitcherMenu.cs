@@ -28,9 +28,26 @@ namespace mulova.switcher
             return Selection.gameObjects.Length > 1;
         }
 
-        private static int runFrame;
         [MenuItem("GameObject/UI/Switcher/Generate", false, 101)]
         public static void CreateSwitcher()
+        {
+            CreateSwitcher(false);
+        }
+
+        [MenuItem("GameObject/UI/Switcher/Generate with root transform", true, 102)]
+        public static bool IsCreateSwitcherWithRootTransform()
+        {
+            return Selection.gameObjects.Length > 1;
+        }
+
+        [MenuItem("GameObject/UI/Switcher/Generate with root transform", false, 102)]
+        public static void CreateSwitcherWithRootTransform()
+        {
+            CreateSwitcher(true);
+        }
+
+        private static int runFrame;
+        public static void CreateSwitcher(bool extractRootDiff)
         {
             var selected = sortedSelection;
             if (selected == null || selected.Count == 1)
@@ -54,7 +71,7 @@ namespace mulova.switcher
             */
 
             var rootData = new List<RootData>();
-            if (CreateSwitcher(selected))
+            if (CreateSwitcher(selected, extractRootDiff))
             {
                 for (int i = 1; i < selected.Count; ++i)
                 {
@@ -111,7 +128,7 @@ namespace mulova.switcher
             Selection.objects = new[] { selected[0] };
         }
 
-        public static bool CreateSwitcher(List<GameObject> roots)
+        public static bool CreateSwitcher(List<GameObject> roots, bool extractRootDiff)
         {
             var duplicates = DiffExtractor.GetDuplicateSiblingNames(roots);
             if (duplicates.Count > 0)
@@ -132,7 +149,7 @@ namespace mulova.switcher
                 {
                     Undo.RecordObjects(roots.ToArray(), "Diff");
                     MakeRootsActive(roots);
-                    ExtractDiff(roots);
+                    ExtractDiff(roots, extractRootDiff);
                     return true;
                 } else
                 {
@@ -152,11 +169,11 @@ namespace mulova.switcher
             }
         }
 
-        private static void ExtractDiff(List<GameObject> roots)
+        private static void ExtractDiff(List<GameObject> roots, bool extractRootDiff)
         {
             // just set data for the first object
             var root0 = roots[0];
-            var diffs = DiffExtractor.CreateDiff(roots.ToArray());
+            var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
             var tDiffs = DiffExtractor.FindAll<TransformData>(diffs);
 
             var switcher = root0.GetComponent<Switcher>();
@@ -221,9 +238,7 @@ namespace mulova.switcher
             {
                 var c = new Case();
                 c.name = i == 0 && firstId != null? firstId: roots[i].name;
-#if UNITY_2019_1_OR_NEWER
                 c.data = diffs[i];
-#endif
                 switcher.cases.Add(c);
             }
             EditorUtility.SetDirty(switcher);

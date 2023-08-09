@@ -291,15 +291,15 @@ namespace mulova.switcher
             }
         }
 
-        internal static List<CompData>[] CreateDiff(GameObject[] roots)
+        internal static List<CompData>[] CreateDiff(GameObject[] roots, bool extractRootDiff)
         {
             var trans = roots.ConvertAll(o => o.transform);
             var store = trans.ConvertAll(p => new List<CompData>());
-            GetDiffRecursively(trans, trans, store, 0);
+            GetDiffRecursively(trans, trans, store, 0, extractRootDiff);
             return store;
         }
 
-        private static void GetDiffRecursively(Transform[] roots, Transform[] current, List<CompData>[] store, int depth)
+        private static void GetDiffRecursively(Transform[] roots, Transform[] current, List<CompData>[] store, int depth, bool extractRootDiff)
         {
             if (roots[0].TryGetComponent<IgnoreSwitch>(out _))
             {
@@ -312,7 +312,7 @@ namespace mulova.switcher
                 comps = current.ConvertAll(p => new Component[] { p.GetComponent<Transform>()});
             } else
             {
-                comps = current.ConvertAll(p => p.GetComponents<Component>().FindAll(c=> !(c is Switcher) && (depth != 0 || !(c is Transform))).ToArray());
+                comps = current.ConvertAll(p => p.GetComponents<Component>().FindAll(c=> !(c is Switcher) && (extractRootDiff || depth != 0 || !(c is Transform))).ToArray());
             }
             for (int i = 0; i < comps[0].Length; ++i)
             {
@@ -322,7 +322,7 @@ namespace mulova.switcher
             for (int i=0; i < current[0].childCount; ++i)
             {
                 var children = current.ConvertAll(p => p.GetChild(i));
-                GetDiffRecursively(roots, children, store, depth+1);
+                GetDiffRecursively(roots, children, store, depth+1, extractRootDiff);
             }
         }
 
