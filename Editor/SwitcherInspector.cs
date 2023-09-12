@@ -140,7 +140,15 @@ namespace mulova.switcher
         {
             var isMultiple = Selection.gameObjects.Length > 1;
 
-            DrawDefaultInspector();
+            using (var c = new EditorGUI.ChangeCheckScope())
+            {
+                DrawDefaultInspector();
+                if (c.changed)
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    switcher.Refresh();
+                }
+            }
             if (switcher.cases.Count == 0)
             {
                 EditorGUILayout.Space();

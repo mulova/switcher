@@ -16,6 +16,8 @@ namespace mulova.switcher
 
         [Tooltip("Delete other cases except the main case when generating switcher")]
         public bool deleteCases = true;
+        [Tooltip("Don't extract diff from the RectTransfrom driven from other script")]
+        public bool ignoreDrivenRectTransform = true;
 
         private static SwitcherConfig _instance;
         public static SwitcherConfig instance

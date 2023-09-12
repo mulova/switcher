@@ -71,21 +71,21 @@ namespace mulova.switcher
 
         public bool IsTypeOf(Type type) => type.IsAssignableFrom(memberType);
 
-        public object GetValue(Component c)
+        public object GetValue(object src)
         {
             try
             {
                 if (srcField != null)
                 {
-                    return srcField.GetValue(c);
+                    return srcField.GetValue(src);
                 }
                 else if (srcProperty != null)
                 {
-                    return srcProperty.GetValue(c);
+                    return srcProperty.GetValue(src);
                 }
                 else
                 {
-                    throw new Exception($"No getter member for '{c.GetType().Name}.{storeField.Name}'");
+                    throw new Exception($"No getter member for '{src.GetType().Name}.{storeField.Name}'");
                 }
             }
             catch (Exception ex)
@@ -220,7 +220,7 @@ namespace mulova.switcher
                         {
                             var slot = new MemberControl(f, isModField, a);
                             list.Add(slot);
-                            Debug.LogFormat("Custom member {0}.{1}", srcType.FullName, f.Name);
+                            //Debug.LogFormat("Custom member {0}.{1}", srcType.FullName, f.Name);
                         }
                     }
                 }

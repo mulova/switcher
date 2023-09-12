@@ -7,12 +7,11 @@
 namespace mulova.switcher
 {
     using System;
-    using UnityEngine.UI;
+    using UnityEngine;
 
     [Serializable]
-    public class VerticallLayoutGroupData : HorizontalOrVerticalLayoutGroupData
+    public class BehaviourData : MonoData<Behaviour>
     {
-        public override Type srcType => typeof(VerticalLayoutGroup);
     }
 }
 

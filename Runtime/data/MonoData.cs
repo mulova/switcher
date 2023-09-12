@@ -18,16 +18,11 @@ namespace mulova.switcher
         public override bool active => enabled;
         public override Type srcType => typeof(T);
 
-        [SerializeField] private T _target;
+        [SerializeField] protected T _target;
         public override Component target
         {
             get { return _target; }
             set { _target = value as T; }
-        }
-
-        public override string ToString()
-        {
-            return target != null ? target.ToString() : null;
         }
     }
 }

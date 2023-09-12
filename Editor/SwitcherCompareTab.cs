@@ -120,8 +120,8 @@ namespace mulova.switcher
                     for (int i = 0; i < switcher.cases.Count; ++i)
                     {
                         switcher.cases[i].data.RemoveAt(deleteIndex);
-                        EditorUtility.SetDirty(switcher);
                     }
+                    EditorUtility.SetDirty(switcher);
                 }
             }
             so.ApplyModifiedProperties();

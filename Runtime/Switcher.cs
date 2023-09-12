@@ -20,8 +20,8 @@ namespace mulova.switcher
         [HideInInspector, SerializeField, EnumType] private string enumType = "";
         [HideInInspector] public bool caseSensitive = true;
 
-        private HashSet<string> keySet = new HashSet<string>();
-        public IReadOnlyCollection<string> keys => keySet;
+        private HashSet<int> applySet = new();
+        private Dictionary<string, int> indexDic = new();
         public List<string> allKeys => cases.ConvertAll(s => s.name);
         public bool showAction => cases.Exists(c => c.showAction || c.hasAction);
         public bool hasAction => cases.Exists(s => s.hasAction);
@@ -29,29 +29,59 @@ namespace mulova.switcher
         public bool showMisc { get; set; } = false;
         public string enumTypeName => enumType;
 
+        public Case this[int i] => cases[i];
+
         private ILogger log => Debug.unityLogger;
 
-        public void ResetKeys()
+        public void Refresh()
         {
-            keySet.Clear();
+            indexDic.Clear();
+            for (int i = 0; i < cases.Count; ++i)
+            {
+                indexDic[cases[i].name] = i;
+            }
         }
 
-        public bool Contains(object o)
-        {
-            string s = NormalizeKey(o);
-            return keySet.Contains(s);
-        }
+        public Case GetCase(object key) => cases[NormalizeKey(key)];
 
-        public bool IsKeys(params object[] keys)
+        public bool Contains(object o) => Contains(NormalizeKey(o));
+
+        public bool Contains(int i) => i >= 0 && i < cases.Count && applySet.Contains(i);
+
+        public bool IsKey(object key) => applySet.Count == 1 && applySet.Contains(NormalizeKey(key));
+        public bool IsKeys(params object[] keys) => IsKeys((IReadOnlyList<object>)keys);
+        public bool IsKeys(IReadOnlyList<object> keys)
         {
-            var count = keys?.Length ?? 0;
-            if (count == keySet.Count)
+            var count = keys?.Count ?? 0;
+            if (count == applySet.Count)
             {
                 if (keys != null)
                 {
-                    foreach (object o in keys)
+                    foreach (var k in keys)
                     {
-                        if (!Contains(o))
+                        if (!Contains(k))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsIndex(int i) => applySet.Count == 1 && applySet.Contains(i);
+        public bool IsIndex(params int[] index) => IsIndex((IReadOnlyList<int>)index);
+        public bool IsIndex(IReadOnlyList<int> index)
+        {
+            var count = index?.Count ?? 0;
+            if (count == applySet.Count)
+            {
+                if (index != null)
+                {
+                    foreach (var i in index)
+                    {
+                        if (!Contains(i))
                         {
                             return false;
                         }
@@ -74,7 +104,7 @@ namespace mulova.switcher
 
         public void SetPreset(object key)
         {
-            var k = NormalizeKey(key);
+            var k = key.ToString();
             foreach (var p in preset)
             {
                 if (p.presetName == k)
@@ -85,70 +115,75 @@ namespace mulova.switcher
             }
         }
 
-        public void Collect(string caseKey, bool changedOnly)
+        public void Collect(object key, bool changedOnly) => Collect(NormalizeKey(key), changedOnly);
+
+        public void Collect(int i, bool changedOnly)
         {
-            var c = cases.Find(s => s.name == caseKey);
-            foreach (var d in c.data)
+            foreach (var d in cases[i].data)
             {
                 d.Collect(d.target, changedOnly);
             }
         }
 
-        public void AddKey(params object[] keys)
+        public void AddIndex(int i) => applySet.Add(i);
+        public void AddIndex(params int[] index) => applySet.AddAll(index);
+        public void AddIndex(IEnumerable<int> index) => applySet.AddAll(index);
+        public void AddKey(object key) => applySet.Add(NormalizeKey(key));
+        public void AddKeys(params object[] keys) => AddKeys((IEnumerable<object>)keys);
+        public void AddKeys(IEnumerable<object> keys)
         {
             foreach (object o in keys)
             {
-                keySet.Add(NormalizeKey(o));
+                applySet.Add(NormalizeKey(o));
             }
         }
 
-        public void RemoveKeys(params object[] keys)
+        public void RemoveIndex(int i) => applySet.Remove(i);
+        public void RemoveIndex(IEnumerable<int> index) => applySet.RemoveAll(index);
+        public void RemoveIndex(params int[] index) => applySet.RemoveAll(index);
+        public void RemoveKey(object key) => applySet.Remove(NormalizeKey(key));
+        public void RemoveKeys(params object[] keys) => AddKeys((IEnumerable<object>)keys);
+        public void RemoveKeys(IEnumerable<object> keys)
         {
             foreach (object o in keys)
             {
-                keySet.Remove(NormalizeKey(o));
+                applySet.Remove(NormalizeKey(o));
             }
         }
 
-        public void ToggleKey(object key)
+        public void ToggleKey(object key) => ToggleIndex(NormalizeKey(key));
+
+        public void ToggleIndex(int i)
         {
-            string k = NormalizeKey(key);
-            if (keySet.Contains(k))
+            if (applySet.Contains(i))
             {
-                keySet.Remove(k);
+                applySet.Remove(i);
             }
             else
             {
-                keySet.Add(k);
+                applySet.Add(i);
             }
         }
 
-        public void SetAction(object key, UnityAction<string> action)
+        public void ClearAction(object key) => ClearAction(NormalizeKey(key));
+
+        public void ClearAction(int i)
         {
-            string k = NormalizeKey(key);
-            Case c = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
-            if (c.isValid)
-            {
-                c.action.RemoveAllListeners();
-                c.action.AddListener(action);
-            }
-            else
-            {
-                Assert.IsTrue(false, $"Key {k} not found");
-            }
+            cases[i].action.RemoveAllListeners();
         }
 
-        public void AddAction(object key, UnityAction<string> action)
+        public void AddAction(object key, UnityAction<string> action) => AddAction(NormalizeKey(key), action);
+
+        public void AddAction(int i, UnityAction<string> action)
         {
-            string k = NormalizeKey(key);
-            Case s = cases.Find(e => e.name.Equals(k, StringComparison.OrdinalIgnoreCase));
+            Case s = cases[i];
             if (s.isValid)
             {
                 s.action.AddListener(action);
             }
             else
             {
-                Assert.IsTrue(false, $"Key {k} not found");
+                Assert.IsTrue(false, $"Key {i} not found");
             }
         }
 
@@ -192,30 +227,77 @@ namespace mulova.switcher
             return trans;
         }
 
-        private string NormalizeKey(object o)
+        private int NormalizeKey(object o)
         {
-            var key = o is int ? cases[(int)o].name : o.ToString();
-            return caseSensitive ? key : key.ToLower();
+            if (indexDic.Count == 0)
+            {
+                Refresh();
+            }
+            var key = caseSensitive ? o.ToString() : o.ToString().ToLower();
+            if (indexDic.TryGetValue(key, out var i))
+            {
+                return i;
+            }
+            else
+            {
+                log.LogFormat(LogType.Error, this, "Missing key {0}", o);
+                return -1;
+            }
         }
 
         public void Clear()
         {
             cases.Clear();
-            keySet.Clear();
+            applySet.Clear();
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="keysOrIndex">can be key (string) or index (int) </param>
-        public void Apply(params object[] keysOrIndex)
+        public void Apply(params object[] index) => Apply((IReadOnlyList<object>)index);
+        public void Apply(IReadOnlyList<object> keys)
         {
-            if (IsKeys(keysOrIndex))
+            if (IsKeys(keys))
             {
                 //log.Debug("Already set");
                 return;
             }
-            ResetKeys();
-            AddKey(keysOrIndex);
+            applySet.Clear();
+            AddKeys(keys);
+            Apply();
+        }
+
+        public void Apply(object key)
+        {
+            if (IsKey(key))
+            {
+                //log.Debug("Already set");
+                return;
+            }
+            applySet.Clear();
+            AddKey(key);
+            Apply();
+        }
+
+        public void Apply(int index)
+        {
+            if (IsIndex(index))
+            {
+                //log.Debug("Already set");
+                return;
+            }
+            applySet.Clear();
+            AddIndex(index);
+            Apply();
+        }
+
+        public void Apply(params int[] index) => Apply((IReadOnlyList<int>)index);
+        public void Apply(IReadOnlyList<int> index)
+        {
+            if (IsIndex(index))
+            {
+                //log.Debug("Already set");
+                return;
+            }
+            applySet.Clear();
+            AddIndex(index);
             Apply();
         }
 
@@ -224,12 +306,17 @@ namespace mulova.switcher
             int match = 0;
             foreach (Case c in cases)
             {
-                if (keySet.Contains(NormalizeKey(c.name)))
+                if (applySet.Contains(NormalizeKey(c.name)))
                 {
                     match++;
-                    try
+                    foreach (var d in c.data)
                     {
-                        foreach (var d in c.data)
+                        if (d.target == null)
+                        {
+                            log.LogFormat(LogType.Warning, this, "[{0}] Case '{1}' target is missing", name, c.name);
+                            continue;
+                        }
+                        try
                         {
 #if UNITY_EDITOR
                             if (!Application.isPlaying)
@@ -240,7 +327,8 @@ namespace mulova.switcher
                             try
                             {
                                 d.ApplyTo(d.target);
-                            } catch (Exception ex)
+                            }
+                            catch (Exception ex)
                             {
                                 log.LogException(ex, this);
                             }
@@ -251,12 +339,12 @@ namespace mulova.switcher
                             }
 #endif
                         }
-                        c.action?.Invoke(c.name);
+                        catch (Exception ex)
+                        {
+                            log.LogFormat(LogType.Error, this, "[{0}] Case {1}\n{2}", name, c.name, ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        log.LogFormat(LogType.Error, this, "{0}({1})\n{2}", c.name, name, ex);
-                    }
+                    c.action?.Invoke(c.name);
                 }
             }
 
@@ -264,9 +352,9 @@ namespace mulova.switcher
             //{
             //    log.Debug("Switcher {0}", keySet.Join(","));
             //}
-            if (match != keySet.Count)
+            if (match != applySet.Count)
             {
-                log.LogFormat(LogType.Error, this, "Missing key exists among {0}", string.Join('.', keySet));
+                log.LogFormat(LogType.Error, this, "Missing key exists among {0}", string.Join('.', applySet));
             }
         }
 

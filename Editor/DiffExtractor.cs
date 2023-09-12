@@ -357,6 +357,13 @@ namespace mulova.switcher
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
             var isTransform = typeof(Transform).IsAssignableFrom(data[0].srcType);
+            if (SwitcherConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r)
+            {
+                if (r.drivenByObject != null)
+                {
+                    return false;
+                }
+            }
             var rectChanged = false;
             foreach (var m in members)
             {
@@ -377,9 +384,14 @@ namespace mulova.switcher
                     if (v0 == null ^ vi == null)
                     {
                         changed = true;
-                    } else if (v0 is Object o0 && o0 != (System.Object)vi)
+                    } else if (v0 is Object o0 && vi is Object oi)
                     {
-                        changed = true;
+                        if (o0 == null && oi == null)
+                        {
+                        } else if (o0 != oi)
+                        {
+                            changed = true;
+                        }
                     }
                     else if (v0 != null && !data[0].MemberEquals(m, v0, vi))
                     {
@@ -431,7 +443,7 @@ namespace mulova.switcher
                 HashSet<string> names = new HashSet<string>();
                 foreach (Transform child in parent)
                 {
-                    if ((child.gameObject.hideFlags & HideFlags.HideAndDontSave) != 0)
+                    if ((child.gameObject.hideFlags & HideFlags.HideAndDontSave) == 0)
                     {
                         if (!names.Add(child.name))
                         {

@@ -32,6 +32,10 @@ namespace mulova.switcher
 
         public bool IsApplied()
         {
+            if (target == null)
+            {
+                return false;
+            }
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
@@ -147,7 +151,10 @@ namespace mulova.switcher
 
         public override int GetHashCode() => target != null ? target.GetHashCode() : base.GetHashCode();
 
-        public override string ToString() => target != null ? $"{target.name} ({srcType.Name})" : srcType.Name;
+        public override string ToString()
+        {
+            return target != null ? $"{GetType().Name} - {target.name} ({srcType.Name})" : GetType().Name;
+        }
 
         /// <summary>
         /// 
