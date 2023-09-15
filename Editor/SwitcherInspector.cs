@@ -181,7 +181,9 @@ namespace mulova.switcher
                 }
             }
 
-            if (switcher.showMisc || isMultiple)
+            var showMisc = switcher.showMisc || isMultiple;
+            var showEnumType = !string.IsNullOrWhiteSpace(enumType.stringValue);
+            if (showMisc || showEnumType)
             {
                 using (var c = new EditorGUI.ChangeCheckScope())
                 {
@@ -189,9 +191,12 @@ namespace mulova.switcher
                     if (c.changed)
                     {
                         serializedObject.ApplyModifiedProperties();
-                        CaseDrawer.rename = true;
+                        CaseDrawer.rename = !string.IsNullOrWhiteSpace(enumType.stringValue);
                     }
                 }
+            }
+            if (showMisc)
+            {
                 using (var c = new EditorGUI.ChangeCheckScope())
                 {
                     EditorGUILayout.PropertyField(caseSensitive);

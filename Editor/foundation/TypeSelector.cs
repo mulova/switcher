@@ -99,7 +99,7 @@ namespace mulova.switcher
             EditorGUI.LabelField(bounds[0], p.displayName);
             var textStyle = type != null ? EditorStyles.toolbarTextField : EditorStyles.textField;
             p.stringValue = EditorGUI.DelayedTextField(bounds[1], p.stringValue, textStyle);
-            if (typeName != p.stringValue && p.stringValue.Length > 0)
+            if (typeName != p.stringValue)
             {
                 typeName = p.stringValue;
                 types.TryGetValue(typeName, out type);
@@ -118,6 +118,9 @@ namespace mulova.switcher
                         }
                     }
                     typeMatchesArr = typeMatches.ToArray();
+                } else
+                {
+                    type = null;
                 }
             }
             if (EditorGUIEx.PopupNullable<Type>(bounds[2], null, ref type, typeMatchesArr))
