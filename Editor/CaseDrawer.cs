@@ -23,7 +23,7 @@ namespace mulova.switcher
             HashSet<Object> targets = new HashSet<Object>();
             foreach (var d in switcher.cases[0].data)
             {
-                if (d.target != null)
+                if (d?.target != null)
                 {
                     targets.Add(d.target.gameObject);
                 }

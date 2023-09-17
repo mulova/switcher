@@ -311,7 +311,7 @@ namespace mulova.switcher
                     match++;
                     foreach (var d in c.data)
                     {
-                        if (d.target == null)
+                        if (d?.target == null)
                         {
                             log.LogFormat(LogType.Warning, this, "[{0}] Case '{1}' target is missing", name, c.name);
                             continue;

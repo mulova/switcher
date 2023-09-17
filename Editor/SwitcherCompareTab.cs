@@ -68,50 +68,56 @@ namespace mulova.switcher
                 for (int i = 0; i < set.data.Count; ++i)
                 {
                     var d = set.data[i];
-                    var t = EditorGUILayout.ObjectField(d.target, d.target?.GetType() ?? typeof(Object), true) as Component;
-                    if (t != d.target)
+                    if (d != null)
                     {
-                        Undo.RecordObject(switcher, "target changed");
-                        d.target = t;
-                        EditorUtility.SetDirty(switcher);
-                    }
+                        var type = d.target != null ? d.target.GetType() : typeof(Object);
+                        var t = EditorGUILayout.ObjectField(d.target, type, true) as Component;
+                        if (t != d.target)
+                        {
+                            Undo.RecordObject(switcher, "target changed");
+                            d.target = t;
+                            EditorUtility.SetDirty(switcher);
+                        }
                         
-                    EditorGUI.indentLevel++;
-                    switch (d)
-                    {
-                        case CompData c:
-                            var members = c.ListChangedMembers();
-                            foreach (var m in members)
-                            {
-                                using (new EditorGUILayout.HorizontalScope())
+                        EditorGUI.indentLevel++;
+                        switch (d)
+                        {
+                            case CompData c:
+                                var members = c.ListChangedMembers();
+                                foreach (var m in members)
                                 {
-                                    var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
-                                    EditorGUILayout.PropertyField(p);
-                                    if (GUILayout.Button("-", GUILayout.Width(20)))
+                                    using (new EditorGUILayout.HorizontalScope())
                                     {
-                                        if (members.Count == 1 && deleteIndex < 0)
+                                        var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
+                                        EditorGUILayout.PropertyField(p);
+                                        if (GUILayout.Button("-", GUILayout.Width(20)))
                                         {
-                                            deleteIndex = i;
-                                        } else
-                                        {
-                                            for (int s=0; s<switcher.cases.Count; ++s)
+                                            if (members.Count == 1 && deleteIndex < 0)
                                             {
-                                                var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
-                                                if (isSet != null)
+                                                deleteIndex = i;
+                                            } else
+                                            {
+                                                for (int s=0; s<switcher.cases.Count; ++s)
                                                 {
-                                                    isSet.boolValue = false;
+                                                    var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
+                                                    if (isSet != null)
+                                                    {
+                                                        isSet.boolValue = false;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                            break;
-                        default:
-                            Debug.LogWarning("Not implemented " + d.GetType());
-                            break;
+                                break;
+                            default:
+                                Debug.LogWarning("Not implemented " + d.GetType());
+                                break;
+                        }
+                        EditorGUI.indentLevel--;
+                    } else
+                    {
                     }
-                    EditorGUI.indentLevel--;
                     EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
                 }
 

@@ -36,7 +36,7 @@ namespace mulova.switcher
 
         public bool IsApplied()
         {
-            return data.TrueForAll(d => d.IsApplied());
+            return data.TrueForAll(d => d != null && d.IsApplied());
         }
 
         public object Clone()
