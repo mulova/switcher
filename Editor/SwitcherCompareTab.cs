@@ -117,6 +117,10 @@ namespace mulova.switcher
                         EditorGUI.indentLevel--;
                     } else
                     {
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            deleteIndex = i;
+                        }
                     }
                     EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
                 }
