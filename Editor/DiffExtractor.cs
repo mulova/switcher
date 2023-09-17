@@ -305,7 +305,7 @@ namespace mulova.switcher
             {
                 return;
             }
-            var isNestedSwitcher = depth > 0 && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
+            var isNestedSwitcher = depth > 0 && SwitcherConfig.instance.bypassNestedSwitcher && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
             Component[][] comps = null;
             if (isNestedSwitcher)
             {

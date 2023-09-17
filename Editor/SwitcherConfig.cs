@@ -18,6 +18,8 @@ namespace mulova.switcher
         public bool deleteCases = true;
         [Tooltip("Don't extract diff from the RectTransfrom driven from other script")]
         public bool ignoreDrivenRectTransform = true;
+        [Tooltip("Don't get difference from nested switcher GameObject")]
+        public bool bypassNestedSwitcher = false;
 
         private static SwitcherConfig _instance;
         public static SwitcherConfig instance
