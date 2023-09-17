@@ -4,9 +4,10 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
-namespace mulova.switcher
+namespace Studio.Common.Ui
 {
     using System;
+    using mulova.switcher;
     using TMPro;
     using UnityEngine;
 
