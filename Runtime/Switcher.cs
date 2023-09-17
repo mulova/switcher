@@ -398,7 +398,7 @@ namespace mulova.switcher
 
         private void OnValidate()
         {
-            if (!string.IsNullOrWhiteSpace(enumType))
+            if (SwitcherConfig.instance.validateEnumType && !string.IsNullOrWhiteSpace(enumType))
             {
                 var type = TypeEx.GetType(enumType);
                 if (type != null)
