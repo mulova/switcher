@@ -18,8 +18,6 @@ namespace mulova.switcher
         public bool deleteCases = true;
         [Tooltip("Don't extract diff from the RectTransfrom driven from other script")]
         public bool ignoreDrivenRectTransform = true;
-        [Tooltip("Check all the enum values exist in the cases")]
-        public bool validateEnumType = false;
 
         private static SwitcherConfig _instance;
         public static SwitcherConfig instance
@@ -36,6 +34,7 @@ namespace mulova.switcher
 
         public static void Reload()
         {
+            _instance = AssetDatabase.LoadAssetAtPath<SwitcherConfig>(PATH);
             if (_instance == null)
             {
                 _instance = CreateInstance<SwitcherConfig>();

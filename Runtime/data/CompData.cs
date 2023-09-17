@@ -17,6 +17,10 @@ namespace mulova.switcher
         public abstract Type srcType { get; }
         public abstract bool active { get; }
         public abstract Component target { get; set; }
+        /// <summary>
+        /// if srcType is the same, higher priority CompData is used.
+        /// </summary>
+        public virtual int priority { get; } = 0;
 
         public virtual void ApplyTo(Component c)
         {

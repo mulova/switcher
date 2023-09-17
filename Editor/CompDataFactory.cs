@@ -10,11 +10,13 @@ namespace mulova.switcher
     using UnityEngine;
     using System;
     using Object = UnityEngine.Object;
+    using UnityEngine.Assertions;
 
-    internal class CompDataFactory
+    public class CompDataFactory
     {
-        internal static CompDataFactory instance = new CompDataFactory();
+        public static CompDataFactory instance { get; private set; } = new CompDataFactory();
         private Dictionary<Type, Type> pool;
+        private ILogger log => Debug.unityLogger;
 
         public CompData GetComponentData(Component c)
         {
@@ -31,7 +33,14 @@ namespace mulova.switcher
             }
         }
 
-        public Type FindDataType(Type type)
+        public void RegisterCustomDataType(Type compType, Type dataType)
+        {
+            Assert.IsTrue(compType.IsAssignableFrom(typeof(CompData)));
+            Assert.IsTrue(dataType.IsAssignableFrom(typeof(Component)));
+            pool[compType] = dataType;
+        }
+
+        public Type FindDataType(Type compType)
         {
             // collect BuildProcessors
             if (pool == null)
@@ -44,8 +53,19 @@ namespace mulova.switcher
                     {
                         try
                         {
-                            var ins = Activator.CreateInstance(t) as CompData;
-                            pool[ins.srcType] = t;
+                            var inst = Activator.CreateInstance(t) as CompData;
+                            if (pool.TryGetValue(inst.srcType, out var oldType))
+                            {
+                                var oldInst = Activator.CreateInstance(oldType) as CompData;
+                                if (inst.priority > oldInst.priority)
+                                {
+                                    pool[inst.srcType] = t;
+                                    log.LogFormat(LogType.Log, "{0} is replaced by {1}", oldType.FullName, t.FullName);
+                                }
+                            } else
+                            {
+                                pool[inst.srcType] = t;
+                            }
                         } catch
                         {
                             Debug.LogError($"Activator.CreateInstance({t.FullName}) failed.");
@@ -54,14 +74,14 @@ namespace mulova.switcher
                     }
                 }
             }
-            pool.TryGetValue(type, out var dataType);
-            var baseType = type.BaseType;
+            pool.TryGetValue(compType, out var dataType);
+            var baseType = compType.BaseType;
             while (dataType == null && (baseType != null && baseType != typeof(Object) && baseType != baseType.BaseType))
             {
                 pool.TryGetValue(baseType, out dataType);
                 if (dataType != null)
                 {
-                    pool[type] = dataType;
+                    pool[compType] = dataType;
                     break;
                 }
                 baseType = baseType.BaseType;

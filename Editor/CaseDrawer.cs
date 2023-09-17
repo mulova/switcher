@@ -4,6 +4,7 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -22,8 +23,10 @@ namespace mulova.switcher
             HashSet<Object> targets = new HashSet<Object>();
             foreach (var d in switcher.cases[0].data)
             {
-                //targets.Add(d.target);
-                targets.Add(d.target.gameObject);
+                if (d.target != null)
+                {
+                    targets.Add(d.target.gameObject);
+                }
             }
             return new List<Object>(targets).ToArray();
         }
@@ -48,7 +51,7 @@ namespace mulova.switcher
             }
 
             // Draw Title
-            if (rename)
+            if (rename || !IsValidId(n))
             {
                 EditorGUI.PropertyField(nameBounds[0], n, new GUIContent(""));
             } else
@@ -130,6 +133,20 @@ namespace mulova.switcher
                 boundsLeft = dataBounds[1];
                 var dataProperty = p.FindPropertyRelative("data");
                 EditorGUI.PropertyField(dataBounds[0], dataProperty, true);
+            }
+
+            bool IsValidId(SerializedProperty p)
+            {
+                var typeName = p.serializedObject.FindProperty("enumType").stringValue;
+                if (!string.IsNullOrWhiteSpace(typeName))
+                {
+                    var type = TypeEx.GetType(typeName);
+                    if (type != null)
+                    {
+                        return Enum.TryParse(type, p.stringValue, out var _);
+                    }
+                }
+                return true;
             }
         }
 

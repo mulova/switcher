@@ -398,7 +398,7 @@ namespace mulova.switcher
 
         private void OnValidate()
         {
-            if (SwitcherConfig.instance.validateEnumType && !string.IsNullOrWhiteSpace(enumType))
+            if (!string.IsNullOrWhiteSpace(enumType))
             {
                 var type = TypeEx.GetType(enumType);
                 if (type != null)
@@ -407,13 +407,13 @@ namespace mulova.switcher
                     var all = Enum.GetNames(type);
                     if (keys.Count != all.Length)
                     {
-                        Debug.LogError($"Switcher keys missing ({enumType})", this);
+                        Debug.LogError($"[{name}] Switcher keys missing ({enumType})", this);
                     } else
                     {
                         var intersect = keys.Intersect(all);
                         if (keys.Count != intersect.Count())
                         {
-                            Debug.LogError($"Switcher keys mismatch ({enumType})", this);
+                            Debug.LogError($"[{name}] Switcher keys mismatch ({enumType})", this);
                         } else
                         {
                             SetEnumType(type);
