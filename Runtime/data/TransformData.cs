@@ -73,11 +73,6 @@ namespace mulova.switcher
                 && this.localRotation.ApproximatelyEquals(that.localRotation)
                 && this.localScale.ApproximatelyEquals(that.localScale);
         }
-
-        public override string ToString()
-        {
-            return target != null ? target.name : null;
-        }
     }
 }
 

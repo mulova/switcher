@@ -8,6 +8,7 @@ namespace mulova.switcher
 {
     using System.Collections.Generic;
     using System.Text;
+    using TMPro;
     using UnityEngine;
     using UnityEngine.Assertions;
 
@@ -108,6 +109,56 @@ namespace mulova.switcher
             {
                 return IsHierarchyPair(t1.parent, t2.parent);
             }
+        }
+
+        public static bool IsSerializable(this Transform t) => t.gameObject.IsSerializable();
+
+        public static bool IsSerializable(this GameObject o)
+        {
+            return (o.hideFlags & HideFlags.HideAndDontSave) == 0 && !o.TryGetComponent<TMP_SubMeshUI>(out var _);
+        }
+
+        public static List<Transform> GetSerializableChildren(this Transform parent)
+        {
+            var list = new List<Transform>();
+            foreach (Transform c in parent)
+            {
+                if (c.IsSerializable())
+                {
+                    list.Add(c);
+                }
+            }
+            return list;
+        }
+
+        public static int GetSerializedChildCount(this Transform parent)
+        {
+            var count = 0;
+            foreach (Transform c in parent)
+            {
+                if (c.IsSerializable())
+                {
+                    ++count;
+                }
+            }
+            return count;
+        }
+
+        public static Transform GetSerializedChild(this Transform parent, int i)
+        {
+            var count = 0;
+            foreach (Transform c in parent)
+            {
+                if (c.IsSerializable())
+                {
+                    if (count == i)
+                    {
+                        return c;
+                    }
+                    ++count;
+                }
+            }
+            return null;
         }
     }
 }

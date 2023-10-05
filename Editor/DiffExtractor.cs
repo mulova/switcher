@@ -52,12 +52,12 @@ namespace mulova.switcher
                     var c = union[ic];
                     // find matching child
                     Transform found = null;
-                    for (int i = 0; i < p.childCount && !found; ++i)
+                    for (int i = 0; i < p.GetSerializedChildCount() && !found; ++i)
                     {
-                        if (p.GetChild(i).name == c.name)
+                        if (p.GetSerializedChild(i).name == c.name)
                         {
                             insertIndex = i + 1;
-                            found = p.GetChild(i);
+                            found = p.GetSerializedChild(i);
                         }
                     }
                     if (found == null)
@@ -71,14 +71,14 @@ namespace mulova.switcher
             }
 
             // sort children
-            for (int i=0; i< parents[0].childCount; ++i)
+            for (int i=0; i< parents[0].GetSerializedChildCount(); ++i)
             {
-                var c = parents[0].GetChild(i);
+                var c = parents[0].GetSerializedChild(i);
 
                 var childRoots = new List<Transform>();
                 for (int j=0; j < parents.Count; ++j)
                 {
-                    childRoots.Add(parents[j].GetChild(i));
+                    childRoots.Add(parents[j].GetSerializedChild(i));
                     if (j != 0)
                     {
                         parents[j].Find(c.name).SetSiblingIndex(i);
@@ -91,25 +91,25 @@ namespace mulova.switcher
             {
                 Assert.AreEqual(parents.Count, roots.Count);
                 List<RootNTransform> union = new List<RootNTransform>();
-                for (int i = 0; i < parents[0].childCount; ++i)
+                for (int i = 0; i < parents[0].GetSerializedChildCount(); ++i)
                 {
-                    union.Add(new RootNTransform(roots[0], parents[0].GetChild(i)));
+                    union.Add(new RootNTransform(roots[0], parents[0].GetSerializedChild(i)));
                 }
 
                 for (int ip = 1; ip < parents.Count; ++ip)
                 {
                     var parent = parents[ip];
                     var oldIndex = -1;
-                    for (int ic = 0; ic < parent.childCount; ++ic)
+                    for (int ic = 0; ic < parent.GetSerializedChildCount(); ++ic)
                     {
-                        var c = parent.GetChild(ic);
+                        var c = parent.GetSerializedChild(ic);
                         int index = union.FindIndex(t => t.name == c.name);
                         if (index < 0)
                         {
                             // find next component index
-                            for (var ic2 = ic + 1; ic2 < parent.childCount && index < 0; ++ic2)
+                            for (var ic2 = ic + 1; ic2 < parent.GetSerializedChildCount() && index < 0; ++ic2)
                             {
-                                index = union.FindIndex(t => t.name == parent.GetChild(ic2).name);
+                                index = union.FindIndex(t => t.name == parent.GetSerializedChild(ic2).name);
                             }
                             if (index < 0)
                             {
@@ -189,14 +189,14 @@ namespace mulova.switcher
             }
 
             // sort children
-            for (int i = 0; i < objs[0].childCount; ++i)
+            for (int i = 0; i < objs[0].GetSerializedChildCount(); ++i)
             {
-                var c = objs[0].GetChild(i);
+                var c = objs[0].GetSerializedChild(i);
 
                 var childRoots = new List<Transform>();
                 for (int j = 0; j < objs.Count; ++j)
                 {
-                    childRoots.Add(objs[j].GetChild(i));
+                    childRoots.Add(objs[j].GetSerializedChild(i));
                     if (j != 0)
                     {
                         objs[j].Find(c.name).SetSiblingIndex(i);
@@ -319,9 +319,9 @@ namespace mulova.switcher
                 GetMatchingComponentDiff(roots, comps, i, store);
             }
             // child diff
-            for (int i=0; i < current[0].childCount; ++i)
+            for (int i=0; i < current[0].GetSerializedChildCount(); ++i)
             {
-                var children = current.ConvertAll(p => p.GetChild(i));
+                var children = current.ConvertAll(p => p.GetSerializedChild(i));
                 GetDiffRecursively(roots, children, store, depth+1, extractRootDiff);
             }
         }
@@ -357,13 +357,6 @@ namespace mulova.switcher
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
             var isTransform = typeof(Transform).IsAssignableFrom(data[0].srcType);
-            if (SwitcherConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r)
-            {
-                if (r.drivenByObject != null)
-                {
-                    return false;
-                }
-            }
             var rectChanged = false;
             foreach (var m in members)
             {
@@ -371,16 +364,19 @@ namespace mulova.switcher
                 var v0 = data[0].GetValue(m);
                 for (int i = 1; i < data.Length && !changed; ++i)
                 {
-                    var active = data[i].target.gameObject.activeInHierarchy;
-                    if (!isTransform && !active) // ignore compoennt value except TransformData.enabled (GameObject.active) values
+                    var active = data[i].target.gameObject.activeSelf;
+                    if (data[0].target.gameObject.activeSelf != active) // ignore disabled behaviour values
+                    {
+                        if (isTransform && m.name == "enabled")
+                        {
+                            changed = true; // store GameObject.SetActive
+                        }
+                    }
+                    if (data[i].target is Behaviour b && !b.isActiveAndEnabled && m.name != "enabled")
                     {
                         continue;
                     }
                     var vi = data[i].GetValue(m);
-                    if (isTransform && !active && m.name != "enabled") // ignore inactive transform values except GameObject.active
-                    {
-                        continue;
-                    }
                     if (v0 == null ^ vi == null)
                     {
                         changed = true;
@@ -398,6 +394,10 @@ namespace mulova.switcher
                         if (m.isReference && v0.GetType() == vi.GetType())
                         {
                             changed = !((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
+                        }
+                        else if (SwitcherConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r && r.drivenByObject != null)
+                        {
+                            // driven change is ignored
                         }
                         else
                         {
@@ -430,7 +430,7 @@ namespace mulova.switcher
             List<string> dup = new List<string>();
             foreach (var o in objs)
             {
-                if (o != null)
+                if (o != null && o.IsSerializable())
                 {
                     dup.AddRange(GetDuplicateSiblingNames(o.transform));
                 }
@@ -443,7 +443,7 @@ namespace mulova.switcher
                 HashSet<string> names = new HashSet<string>();
                 foreach (Transform child in parent)
                 {
-                    if ((child.gameObject.hideFlags & HideFlags.HideAndDontSave) == 0)
+                    if (child.IsSerializable())
                     {
                         if (!names.Add(child.name))
                         {
@@ -458,10 +458,10 @@ namespace mulova.switcher
 
         internal static bool IsChildrenMatches(IList<Transform> objs)
         {
-            int childCount = objs[0].childCount;
+            int childCount = objs[0].GetSerializedChildCount();
             for (int i = 1; i < objs.Count; ++i)
             {
-                if (objs[i].childCount != childCount)
+                if (objs[i].GetSerializedChildCount() != childCount)
                 {
                     return false;
                 }
@@ -471,7 +471,7 @@ namespace mulova.switcher
             {
                 for (int i=0; i<objs.Count; ++i)
                 {
-                    children[i] = objs[i].GetChild(c);
+                    children[i] = objs[i].GetSerializedChild(c);
                     if (i != 0 && children[0].name != children[i].name)
                     {
                         return false;
@@ -526,12 +526,12 @@ namespace mulova.switcher
                     Debug.LogError($"Component count mismatch({i+1}/{objs.Count}): '{objs[i].transform.GetScenePath()}' ({comps[i].Count})", objs[i]);
                 }
             }
-            for (int c=0; c<objs[0].childCount; ++c)
+            for (int c=0; c<objs[0].GetSerializedChildCount(); ++c)
             {
                 List<Transform> children = new List<Transform>();
                 for (int i=0; i<objs.Count; ++i)
                 {
-                    children.Add(objs[i].GetChild(c));
+                    children.Add(objs[i].GetSerializedChild(c));
                 }
                 passed &= IsComponentMatch(children);
             }
@@ -540,9 +540,9 @@ namespace mulova.switcher
 
         internal static int GetSiblingIndex(string objName, Transform parent)
         {
-            for (int i = 0; i < parent.childCount; ++i)
+            for (int i = 0; i < parent.GetSerializedChildCount(); ++i)
             {
-                var c = parent.GetChild(i);
+                var c = parent.GetSerializedChild(i);
                 if (c.name == objName)
                 {
                     return i;
