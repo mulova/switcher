@@ -39,7 +39,7 @@ namespace mulova.switcher
             }
         }
 
-        internal static void CreateMissingChildren(IList<Transform> parents, IList<Transform> roots)
+        internal static void CreateMissingChildren(IReadOnlyList<Transform> parents, IReadOnlyList<Transform> roots)
         {
             var union = GetChildUnion(parents, roots);
 
@@ -87,7 +87,7 @@ namespace mulova.switcher
                 CreateMissingChildren(childRoots, roots);
             }
 
-            static List<RootNTransform> GetChildUnion(IList<Transform> parents, IList<Transform> roots)
+            static List<RootNTransform> GetChildUnion(IReadOnlyList<Transform> parents, IReadOnlyList<Transform> roots)
             {
                 Assert.AreEqual(parents.Count, roots.Count);
                 List<RootNTransform> union = new List<RootNTransform>();
@@ -156,7 +156,7 @@ namespace mulova.switcher
             }
         }
 
-        internal static void CreateMissingComponent(IList<Transform> objs, IList<Transform> roots)
+        internal static void CreateMissingComponent(IReadOnlyList<Transform> objs, IReadOnlyList<Transform> roots)
         {
             var union = GetComponentUnion(objs, roots);
 
@@ -212,7 +212,7 @@ namespace mulova.switcher
                 return filtered.ToList();
             }
 
-            static List<RootNComp> GetComponentUnion(IList<Transform> objs, IList<Transform> roots)
+            static List<RootNComp> GetComponentUnion(IReadOnlyList<Transform> objs, IReadOnlyList<Transform> roots)
             {
                 Assert.AreEqual(objs.Count, roots.Count);
                 var all = GetAllComponents(objs[0]);
@@ -318,6 +318,14 @@ namespace mulova.switcher
             {
                 GetMatchingComponentDiff(roots, comps, i, store);
             }
+            foreach (var compDatas in store)
+            {
+                foreach (var c in compDatas)
+                {
+                    c.Postprocess(compDatas);
+                }
+            }
+            
             // child diff
             for (int i=0; i < current[0].GetSerializedChildCount(); ++i)
             {
@@ -352,7 +360,7 @@ namespace mulova.switcher
             }
         }
 
-        internal static bool GetDiffs(CompData[] data)
+        internal static bool GetDiffs(IList<CompData> data)
         {
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
@@ -362,7 +370,7 @@ namespace mulova.switcher
             {
                 var changed = false;
                 var v0 = data[0].GetValue(m);
-                for (int i = 1; i < data.Length && !changed; ++i)
+                for (int i = 1; i < data.Count && !changed; ++i)
                 {
                     var active = data[i].target.gameObject.activeSelf;
                     if (data[0].target.gameObject.activeSelf != active) // ignore disabled behaviour values
@@ -425,7 +433,7 @@ namespace mulova.switcher
             return anyChanged;
         }
 
-        internal static List<string> GetDuplicateSiblingNames(IList<GameObject> objs)
+        internal static List<string> GetDuplicateSiblingNames(IReadOnlyList<GameObject> objs)
         {
             List<string> dup = new List<string>();
             foreach (var o in objs)
@@ -456,7 +464,7 @@ namespace mulova.switcher
             }
         }
 
-        internal static bool IsChildrenMatches(IList<Transform> objs)
+        internal static bool IsChildrenMatches(IReadOnlyList<Transform> objs)
         {
             int childCount = objs[0].GetSerializedChildCount();
             for (int i = 1; i < objs.Count; ++i)
@@ -485,7 +493,7 @@ namespace mulova.switcher
             return true;
         }
 
-        internal static bool IsComponentMatch(IList<Transform> objs)
+        internal static bool IsComponentMatch(IReadOnlyList<Transform> objs)
         {
             var passed = true;
             var comps = new List<Component>[objs.Count];

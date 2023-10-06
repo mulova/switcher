@@ -102,6 +102,8 @@ namespace mulova.switcher
 
         protected virtual bool IsCollectable(MemberControl m, Component c) => true;
 
+        public virtual void Postprocess(IReadOnlyList<CompData> list) { }
+
         public override bool Equals(object obj)
         {
             var that = obj as CompData;
