@@ -10,6 +10,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using UnityEngine;
     using UnityEngine.Events;
+    using IList = System.Collections.IList;
 
     [Serializable]
     public abstract class CompData
@@ -129,30 +130,61 @@ namespace mulova.switcher
         {
             if (v0 != null)
             {
-                switch (v0)
+                if (v0.GetType().IsAssignableFrom(typeof(IList)))
                 {
-                    case float f0:
-                        var f1 = (float)v1;
-                        return Mathf.Abs(f1 - f0) <= Mathf.Epsilon;
-                    case Vector2 v20:
-                        var v21 = (Vector2)v1;
-                        return v20.ApproximatelyEquals(v21);
-                    case Vector3 v30:
-                        var v31 = (Vector3)v1;
-                        return v30.ApproximatelyEquals(v31);
-                    case Vector4 v40:
-                        var v41 = (Vector4)v1;
-                        return v40.ApproximatelyEquals(v41);
-                    case UnityEventBase u0:
+                    var l0 = v0 as IList;
+                    var l1 = v1 as IList;
+                    if (l0 != l1)
+                    {
+                        if (l0 == null || l1 == null)
                         {
-                            var u1 = v1 as UnityEventBase;
-                            return u0.PersistentEventEquals(u1);
+                            return false;
                         }
-                    default:
-                        return v0.Equals(v1);
+                        if (l0.Count != l1.Count)
+                        {
+                            return false;
+                        }
+                        for (int i=0; i<l0.Count; ++i)
+                        {
+                            if (!MemberEquals(null, l0[i], l1[i]))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    return true;
+                } else
+                {
+                    return ValueEquals(v0, v1);
                 }
             }
             return v0 == v1;
+        }
+
+        public virtual bool ValueEquals(object v0, object v1)
+        {
+            switch (v0)
+            {
+                case float f0:
+                    var f1 = (float)v1;
+                    return Mathf.Abs(f1 - f0) <= Mathf.Epsilon;
+                case Vector2 v20:
+                    var v21 = (Vector2)v1;
+                    return v20.ApproximatelyEquals(v21);
+                case Vector3 v30:
+                    var v31 = (Vector3)v1;
+                    return v30.ApproximatelyEquals(v31);
+                case Vector4 v40:
+                    var v41 = (Vector4)v1;
+                    return v40.ApproximatelyEquals(v41);
+                case UnityEventBase u0:
+                    {
+                        var u1 = v1 as UnityEventBase;
+                        return u0.PersistentEventEquals(u1);
+                    }
+                default:
+                    return v0.Equals(v1);
+            }
         }
 
         public override int GetHashCode() => target != null ? target.GetHashCode() : base.GetHashCode();
@@ -195,38 +227,50 @@ namespace mulova.switcher
                     var val = GetValueFrom(m, comp);
                     if (val != null && rc != r0)
                     {
-                        if (m.IsTypeOf(typeof(UnityEventBase)))
+                        if (val is IList list)
                         {
-                            var e = val as UnityEventBase;
-                            e.ReplaceMatchingTarget(rc, r0);
-                        }
-                        else if (m.IsTypeOf(typeof(Component)))
-                        {
-                            var c = val as Component;
-                            var match = c.GetHierarchyPair(rc, r0);
-                            if (match != null)
+                            for (int i=0; i<list.Count; ++i)
                             {
-                                val = match;
+                                ProcessMatchingRefs(list[i], rc, r0);
                             }
-                        }
-                        else if (m.IsTypeOf(typeof(GameObject)))
+                        } else
                         {
-                            var o = val as GameObject;
-                            var t = o.transform;
-                            var match = t.GetHierarchyPair(rc, r0);
-                            if (match != null)
+                            if (val is Component c)
                             {
-                                val = match.gameObject;
+                                var match = c.GetHierarchyPair(rc, r0);
+                                if (match != null)
+                                {
+                                    SetValue(m, comp, match);
+                                }
+                            }
+                            else if (val is GameObject o)
+                            {
+                                var t = o.transform;
+                                var match = t.GetHierarchyPair(rc, r0);
+                                if (match != null)
+                                {
+                                    SetValue(m, comp, match.gameObject);
+                                }
+                            } else
+                            {
+                                ProcessMatchingRefs(val, rc, r0);
                             }
                         }
                     }
-
-                    SetValue(m, comp, val);
                 }
                 catch (Exception ex)
                 {
                     Debug.LogErrorFormat("Fail to replace reference: {0} {1}.{2}\n{3}", comp.transform.GetScenePath(), m.storeField.ReflectedType.FullName, m.storeField.Name, ex);
                 }
+            }
+        }
+
+        public virtual void ProcessMatchingRefs(object val, Transform rc, Transform r0)
+        {
+            if (typeof(UnityEventBase).IsAssignableFrom(val.GetType()))
+            {
+                var e = val as UnityEventBase;
+                e.ReplaceMatchingTarget(rc, r0);
             }
         }
     }

@@ -20,7 +20,7 @@ namespace mulova.switcher
             return listener;
         }
 
-        public static void SetPersistentTarget(object call, Component target)
+        public static void SetPersistentTarget(object call, Object target)
         {
             call.GetType().GetField("m_Target", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(call, target);
         }
@@ -116,17 +116,35 @@ namespace mulova.switcher
             }
             for (int i = 0; i < evt.GetPersistentEventCount(); ++i)
             {
-                var target = evt.GetPersistentTarget(i) as Component;
-                if (target != null && (target.transform == root || target.transform.IsChildOf(root)))
+                var target = evt.GetPersistentTarget(i);
+                switch (target)
                 {
-                    // m_PersistentCalls.GetListener (index)?.target
-                    object call = evt.GetPersistentCall(i);
-                    var match = target.GetHierarchyPair(root, matchingRoot);
-                    if (match != null)
-                    {
-                        SetPersistentTarget(call, match);
-                    }
+                    case Component c:
+                        if (c != null && (c.transform == root || c.transform.IsChildOf(root)))
+                        {
+                            // m_PersistentCalls.GetListener (index)?.target
+                            object call = evt.GetPersistentCall(i);
+                            var match = c.GetHierarchyPair(root, matchingRoot);
+                            if (match != null)
+                            {
+                                SetPersistentTarget(call, match);
+                            }
+                        }
+                        break;
+                    case GameObject o:
+                        if (o != null && (o.transform == root || o.transform.IsChildOf(root)))
+                        {
+                            // m_PersistentCalls.GetListener (index)?.target
+                            object call = evt.GetPersistentCall(i);
+                            var match = o.transform.GetHierarchyPair(root, matchingRoot);
+                            if (match != null)
+                            {
+                                SetPersistentTarget(call, match.gameObject);
+                            }
+                        }
+                        break;
                 }
+                
             }
         }
     }
