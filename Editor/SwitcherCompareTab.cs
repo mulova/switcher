@@ -84,30 +84,36 @@ namespace mulova.switcher
                         {
                             case CompData c:
                                 var members = c.ListChangedMembers();
-                                foreach (var m in members)
+                                if (members.Count > 0)
                                 {
-                                    using (new EditorGUILayout.HorizontalScope())
+                                    foreach (var m in members)
                                     {
-                                        var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
-                                        EditorGUILayout.PropertyField(p);
-                                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                                        using (new EditorGUILayout.HorizontalScope())
                                         {
-                                            if (members.Count == 1 && deleteIndex < 0)
+                                            var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
+                                            EditorGUILayout.PropertyField(p);
+                                            if (GUILayout.Button("-", GUILayout.Width(20)))
                                             {
-                                                deleteIndex = i;
-                                            } else
-                                            {
-                                                for (int s=0; s<switcher.cases.Count; ++s)
+                                                if (members.Count == 1 && deleteIndex < 0)
                                                 {
-                                                    var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
-                                                    if (isSet != null)
+                                                    deleteIndex = i;
+                                                } else
+                                                {
+                                                    for (int s=0; s<switcher.cases.Count; ++s)
                                                     {
-                                                        isSet.boolValue = false;
+                                                        var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
+                                                        if (isSet != null)
+                                                        {
+                                                            isSet.boolValue = false;
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                } else
+                                {
+                                    deleteIndex = i;
                                 }
                                 break;
                             default:
