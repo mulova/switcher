@@ -6,36 +6,45 @@
 
 namespace mulova.switcher
 {
+    using System;
     using UnityEditor;
     using UnityEngine;
 
-    public class SwitcherCompareWindow : TabbedEditorWindow
+    public class SwitcherCompareWindow : TabbedEditorWindow, IHasCustomMenu
     {
         private int compareCount = 2;
+        public override UnityEngine.Object targetObject => Selection.activeGameObject != null ? Selection.activeGameObject.GetComponent<Switcher>() : null;
 
         protected override void CreateTabs()
         {
             titleContent.text = "Switcher";
             ShowAllTab(true);
-            AddTab(new SwitcherCompareTab(0, this));
-            AddTab(new SwitcherCompareTab(1, this));
+            OnSelectionChange();
+            if (SwitcherConfig.instance.compareTabCount != 0)
+            {
+                compareCount = Mathf.Min(compareCount, SwitcherConfig.instance.compareTabCount);
+            }
             syncScroll = true;
+        }
+
+        private Switcher selected;
+        protected override void OnSelectionChange()
+        {
+            base.OnSelectionChange();
+            if (serializedObject != null)
+            {
+                selected = serializedObject.targetObject as Switcher;
+                compareCount = selected.cases.Count;
+            }
         }
 
         protected override void OnHeaderGUI()
         {
-            if (Selection.activeGameObject == null)
+            if (selected != null)
             {
-                return;
-            }
-            var s = Selection.activeGameObject.GetComponent<Switcher>();
-            var max = s?.cases.Count ?? 2;
-            if (max > 2)
-            {
-                var count = EditorGUILayout.IntSlider(compareCount, 2, max);
-                if (compareCount != count)
+                compareCount = EditorGUILayout.IntSlider(compareCount, 2, selected.cases.Count);
+                if (compareCount != tabCount)
                 {
-                    compareCount = count;
                     // Add tabs
                     for (int i=tabCount; i<compareCount; ++i)
                     {
@@ -46,7 +55,6 @@ namespace mulova.switcher
                     {
                         RemoveTab(GetTab(i));
                     }
-                    OnSelectionChange();
                 }
             }
         }
@@ -55,10 +63,20 @@ namespace mulova.switcher
         public static SwitcherCompareWindow Get()
         {
             // Get existing open window or if none, make a new one:
-            SwitcherCompareWindow window = CreateWindow<SwitcherCompareWindow>();
-            window.titleContent = new GUIContent("Compare");
+            SwitcherCompareWindow window = GetWindow<SwitcherCompareWindow>();
             window.Show();
             return window;
+        }
+
+        internal bool isAdd { get; private set; }
+        public void AddItemsToMenu(GenericMenu menu)
+        {
+            menu.AddItem(new GUIContent("Toggle Add"), isAdd, ToggleAdd);
+        }
+
+        private void ToggleAdd()
+        {
+            isAdd = !isAdd;
         }
     }
 }

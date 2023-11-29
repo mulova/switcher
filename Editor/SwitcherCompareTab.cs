@@ -6,15 +6,16 @@
 
 namespace mulova.switcher
 {
+    using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
 
     public class SwitcherCompareTab : EditorTab
     {
         //private WindowToolbar toolbar = new WindowToolbar();
-        internal SerializedObject so;
-        internal Switcher switcher;
+        internal Switcher switcher => targetObject as Switcher;
         private int setIndex;
+        private SwitcherCompareWindow win => base.window as SwitcherCompareWindow;
 
         public SwitcherCompareTab(int index, TabbedEditorWindow window) : base(window)
         {
@@ -24,20 +25,6 @@ namespace mulova.switcher
         public override void AddContextMenu() {}
         public override void OnTabChange(bool sel) { }
         public override void OnFocus(bool focus) { }
-
-        public override void OnSelectionChange()
-        {
-            if (Selection.activeGameObject == null)
-            {
-                return;
-            }
-            var s = Selection.activeGameObject.GetComponent<Switcher>();
-            if (s != null)
-            {
-                switcher = s;
-                so = new SerializedObject(switcher);
-            }
-        }
 
         public override void OnHeaderGUI()
         {
@@ -54,12 +41,14 @@ namespace mulova.switcher
             }
         }
 
+        private List<int> addIndex = new List<int>();
         public override void OnInspectorGUI()
         {
             if (switcher == null || setIndex >= switcher.cases.Count)
             {
                 return;
             }
+            var so = win.serializedObject;
             so.Update();
             var set = switcher.cases[setIndex];
             using (new EditorGUILayout.VerticalScope())
@@ -90,18 +79,19 @@ namespace mulova.switcher
                                     {
                                         using (new EditorGUILayout.HorizontalScope())
                                         {
-                                            var p = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{i}].{m.name}");
+                                            var p = FindProperty(so, setIndex, i, m.name);
                                             EditorGUILayout.PropertyField(p);
                                             if (GUILayout.Button("-", GUILayout.Width(20)))
                                             {
                                                 if (members.Count == 1 && deleteIndex < 0)
                                                 {
                                                     deleteIndex = i;
-                                                } else
+                                                }
+                                                else
                                                 {
-                                                    for (int s=0; s<switcher.cases.Count; ++s)
+                                                    for (int s = 0; s < switcher.cases.Count; ++s)
                                                     {
-                                                        var isSet = so.FindProperty($"{nameof(switcher.cases)}.Array.data[{s}].data.Array.data[{i}].{m.name}{MemberControl.MOD_SUFFIX}");
+                                                        var isSet = FindProperty(so, s, i, m.name+MemberControl.MOD_SUFFIX);
                                                         if (isSet != null)
                                                         {
                                                             isSet.boolValue = false;
@@ -114,6 +104,41 @@ namespace mulova.switcher
                                 } else
                                 {
                                     deleteIndex = i;
+                                }
+                                if (setIndex == 0 && win.isAdd)
+                                {
+                                    members = c.ListUnchangedMembers();
+                                    if (members.Count > 0)
+                                    {
+                                        members.Sort((a,b)=> a.name.CompareTo(b.name));
+                                        var names = members.ConvertAll(m => m.name).ToArray();
+                                        while (addIndex.Count <= i)
+                                        {
+                                            addIndex.Add(0);
+                                        }
+                                        addIndex[i] = Mathf.Clamp(addIndex[i], 0, names.Length - 1);
+                                        using (new EditorGUILayout.HorizontalScope())
+                                        {
+                                            addIndex[i] = EditorGUILayout.Popup(addIndex[i], names);
+                                            if (GUILayout.Button("+", GUILayout.Width(20)))
+                                            {
+                                                var m = members[addIndex[i]];
+                                                var p0 = FindProperty(so, 0, i, m.name);
+                                                var val = p0.GetValue();
+                                                Undo.RecordObject(switcher, "Add " + m.ToString());
+                                                for (int s = 0; s < switcher.cases.Count; ++s)
+                                                {
+                                                    var isSet = FindProperty(so, s, i, m.name + MemberControl.MOD_SUFFIX);
+                                                    if (isSet != null)
+                                                    {
+                                                        isSet.boolValue = true;
+                                                    }
+                                                    var p = FindProperty(so, s, i, m.name);
+                                                    p.SetValue(val);
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                                 break;
                             default:
@@ -133,6 +158,7 @@ namespace mulova.switcher
 
                 if (deleteIndex >= 0)
                 {
+                    Undo.RecordObject(switcher, "Remove "+ switcher.cases[0].data[deleteIndex].ToString());
                     for (int i = 0; i < switcher.cases.Count; ++i)
                     {
                         switcher.cases[i].data.RemoveAt(deleteIndex);
@@ -142,6 +168,8 @@ namespace mulova.switcher
             }
             so.ApplyModifiedProperties();
         }
+
+        private SerializedProperty FindProperty(SerializedObject so, int setIndex, int dataIndex, string memberName) => so.FindProperty($"{nameof(switcher.cases)}.Array.data[{setIndex}].data.Array.data[{dataIndex}].{memberName}");
 
         public override void OnFooterGUI()
         {

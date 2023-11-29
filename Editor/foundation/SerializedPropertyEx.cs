@@ -8,6 +8,8 @@ namespace mulova.switcher
 {
     using System;
     using UnityEditor;
+    using UnityEngine;
+    using Object = UnityEngine.Object;
 
     public static class SerializedPropertyEx
     {
@@ -63,6 +65,87 @@ namespace mulova.switcher
                     return p.rectIntValue;
                 case SerializedPropertyType.BoundsInt:
                     return p.boundsIntValue;
+                default:
+                    throw new Exception("Unreachable");
+            }
+        }
+
+        public static void SetValue(this SerializedProperty p, object val)
+        {
+            switch (p.propertyType)
+            {
+                case SerializedPropertyType.Integer:
+                    p.intValue = (int)val;
+                    break;
+                case SerializedPropertyType.Boolean:
+                    p.boolValue = (bool)val;
+                    break;
+                case SerializedPropertyType.Float:
+                    p.floatValue = (float)val;
+                    break;
+                case SerializedPropertyType.String:
+                    p.stringValue = (string)val;
+                    break;
+                case SerializedPropertyType.Color:
+                    p.colorValue = (Color)val;
+                    break;
+                case SerializedPropertyType.ObjectReference:
+                    p.objectReferenceValue = (UnityEngine.Object)val;
+                    break;
+                case SerializedPropertyType.LayerMask:
+                    p.intValue = (int)val;
+                    break;
+                case SerializedPropertyType.Enum:
+                    p.enumValueIndex = (int)val;
+                    break;
+                case SerializedPropertyType.Vector2:
+                    p.vector2Value = (Vector2)val;
+                    break;
+                case SerializedPropertyType.Vector3:
+                    p.vector3Value = (Vector3)val;
+                    break;
+                case SerializedPropertyType.Vector4:
+                    p.vector4Value = (Vector4)val;
+                    break;
+                case SerializedPropertyType.Rect:
+                    p.rectValue = (Rect)val;
+                    break;
+                case SerializedPropertyType.ArraySize:
+                    p.arraySize = (int)val;
+                    break;
+                case SerializedPropertyType.Character:
+                    p.intValue = (int)val;
+                    break;
+                case SerializedPropertyType.AnimationCurve:
+                    p.animationCurveValue = (AnimationCurve)val;
+                    break;
+                case SerializedPropertyType.Bounds:
+                    p.boundsValue = (Bounds)val;
+                    break;
+                case SerializedPropertyType.Gradient:
+                    p.colorValue = (Color)val;
+                    break;
+                case SerializedPropertyType.Quaternion:
+                    p.quaternionValue = (Quaternion)val;
+                    break;
+                case SerializedPropertyType.ExposedReference:
+                    p.exposedReferenceValue = (Object)val;
+                    break;
+                //case SerializedPropertyType.FixedBufferSize:
+                //    p.fixedBufferSize = val;
+                //    break;
+                case SerializedPropertyType.Vector2Int:
+                    p.vector2IntValue = (Vector2Int)val;
+                    break;
+                case SerializedPropertyType.Vector3Int:
+                    p.vector3IntValue = (Vector3Int)val;
+                    break;
+                case SerializedPropertyType.RectInt:
+                    p.rectIntValue = (RectInt)val;
+                    break;
+                case SerializedPropertyType.BoundsInt:
+                    p.boundsIntValue = (BoundsInt)val;
+                    break;
                 default:
                     throw new Exception("Unreachable");
             }

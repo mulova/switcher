@@ -21,6 +21,8 @@ namespace Studio.Common.Ui
 
         [Store] public TMP_FontAsset font;
         [HideInInspector] public bool font_mod;
+        [Store] public Material fontSharedMaterial;
+        [HideInInspector] public bool fontSharedMaterial_mod;
         [Store] public bool enableVertexGradient;
         [HideInInspector] public bool enableVertexGradient_mod;
         [Store] public VertexGradient colorGradient;

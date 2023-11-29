@@ -12,10 +12,11 @@ namespace mulova.switcher
     using UnityEditor;
     using UnityEngine;
     using UnityEngine.SceneManagement;
+    using Object = UnityEngine.Object;
 
     public abstract class TabbedEditorWindow : EditorWindow {
 		
-		private TabData selected;
+		private TabData selectedTab;
 		private List<TabData> tabs = new List<TabData>();
 		private bool closable;
 
@@ -24,12 +25,29 @@ namespace mulova.switcher
         public Color inactiveTabBgColor = Color.black;
         public Color inactiveTabContentColor = Color.green;
         public bool syncScroll;
+        public virtual Object targetObject => Selection.activeObject;
+        private SerializedObject _serializedObject;
+        public SerializedObject serializedObject
+        {
+            get
+            {
+                if (_serializedObject?.targetObject == null)
+                {
+                    _serializedObject = null;
+                }
+                if (targetObject != null && (_serializedObject == null || _serializedObject.targetObject != targetObject))
+                {
+                    _serializedObject = new SerializedObject(targetObject);
+                }
+                return _serializedObject;
+            }
+        }
 
         protected EditorTab activeTab
         {
             get
             {
-                return selected?.tab;
+                return selectedTab?.tab;
             }
             set
             {
@@ -37,7 +55,7 @@ namespace mulova.switcher
                 {
                     if (t.tab == value)
                     {
-                        selected = t;
+                        selectedTab = t;
                         break;
                     }
                 }
@@ -72,15 +90,15 @@ namespace mulova.switcher
 			    if (!string.IsNullOrEmpty(tabName)) {
 				    foreach (TabData t in tabs) {
 					    if (tabName == t.tab.ToString()) {
-						    selected = t;
+						    selectedTab = t;
 						    break;
 					    }
 				    }
 
 			    } else {
-				    selected = tabs[0];
+				    selectedTab = tabs[0];
 			    }
-			    selected.tab.OnTabChange(true);
+			    selectedTab.tab.OnTabChange(true);
             }
             OnSelectionChange();
             #if UNITY_2017_1_OR_NEWER
@@ -125,12 +143,13 @@ namespace mulova.switcher
 
 		protected virtual void OnSelectionChange() {
 			Repaint();
+            var so = targetObject != null? new SerializedObject(targetObject): null;
             if (showAllTab)
             {
-                tabs.ForEach(t => t.tab.OnSelectionChange());
+                tabs.ForEach(t => t.tab.OnSelectionChange(so));
             } else
             {
-			    selected.tab.OnSelectionChange();
+			    selectedTab.tab.OnSelectionChange(so);
             }
         }
 
@@ -189,7 +208,7 @@ namespace mulova.switcher
                         }
                         if (isContextMenu)
                         {
-                            selected.tab.AddContextMenu();
+                            selectedTab.tab.AddContextMenu();
                         }
                     }
                     EditorGUILayout.EndHorizontal();
@@ -201,29 +220,29 @@ namespace mulova.switcher
                         EditorGUILayout.BeginHorizontal();
                         for (int i=0; i<tabs.Count; ++i) {
                             TabData t = tabs[i];
-                            bool sel = t == selected;
+                            bool sel = t == selectedTab;
                             if (sel) {
                                 GUI.backgroundColor = activeTabBgColor;
                                 GUI.contentColor = activeTabContentColor;
                                 GUILayout.Button(t.tab.ToString(), EditorStyles.toolbarButton);
                                 if (closable && GUILayout.Button("x", EditorStyles.toolbarButton, GUILayout.Width(15))) {
-                                    selected.tab.OnDisable();
-                                    selected.tab.Remove();
-                                    tabs.Remove(selected);
+                                    selectedTab.tab.OnDisable();
+                                    selectedTab.tab.Remove();
+                                    tabs.Remove(selectedTab);
                                     i = Math.Max(0, i-1);
                                     if (tabs.Count > 0) {
-                                        selected = tabs[i];
+                                        selectedTab = tabs[i];
                                     } else {
-                                        selected = null;
+                                        selectedTab = null;
                                     }
                                 }
                             } else {
                                 GUI.backgroundColor = inactiveTabBgColor;
                                 GUI.contentColor = inactiveTabContentColor;
                                 if (GUILayout.Button(t.tab.ToString(), EditorStyles.toolbarButton)) {
-                                    selected.tab.OnTabChange(false);
-                                    selected = t;
-                                    selected.tab.OnTabChange(true);
+                                    selectedTab.tab.OnTabChange(false);
+                                    selectedTab = t;
+                                    selectedTab.tab.OnTabChange(true);
                                     sel = true;
                                     EditorPrefs.SetString(GetWindowId(), t.tab.ToString());
                                 }
@@ -233,16 +252,16 @@ namespace mulova.switcher
                         GUI.backgroundColor = bgColor;
                         GUI.contentColor = contentColor;
                     }
-					if (selected != null) {
-						selected.tab.OnHeaderGUI();
-						selected.tab.ShowResult();
-						selected.scrollPos = EditorGUILayout.BeginScrollView(selected.scrollPos);
-						selected.tab.OnInspectorGUI();
+					if (selectedTab != null) {
+						selectedTab.tab.OnHeaderGUI();
+						selectedTab.tab.ShowResult();
+						selectedTab.scrollPos = EditorGUILayout.BeginScrollView(selectedTab.scrollPos);
+						selectedTab.tab.OnInspectorGUI();
 						EditorGUILayout.EndScrollView();
-						selected.tab.OnFooterGUI();
+						selectedTab.tab.OnFooterGUI();
                         if (isContextMenu)
                         {
-                            selected.tab.AddContextMenu();
+                            selectedTab.tab.AddContextMenu();
                         }
 					}
 				}
@@ -304,6 +323,7 @@ namespace mulova.switcher
         }
 
 		public void AddTab(params EditorTab[] tab) {
+            var so = targetObject != null ? new SerializedObject(targetObject) : null;
 			foreach (EditorTab t in tab) {
 				tabs.Add(new TabData(t));
                 try {
@@ -312,13 +332,14 @@ namespace mulova.switcher
                     {
                         t.OnTabChange(true);
                     }
+                    t.OnSelectionChange(so);
                 } catch (Exception ex)
                 {
                     Debug.LogError(ex.ToString());
                 }
 			}
-			if (selected == null) {
-				selected = tabs[0];
+			if (selectedTab == null) {
+				selectedTab = tabs[0];
 			}
 		}
 
@@ -326,23 +347,23 @@ namespace mulova.switcher
         {
             int index = tabs.FindIndex(t => t.tab == tab);
             tabs.RemoveAt(index);
-            if (selected != null && selected.tab == tab)
+            if (selectedTab != null && selectedTab.tab == tab)
             {
                 tab.OnTabChange(false);
                 if (index > 0)
                 {
-                    selected = tabs[index - 1];
+                    selectedTab = tabs[index - 1];
                 } else if (tabs.Count > 0)
                 {
-                    selected = tabs[0];
+                    selectedTab = tabs[0];
                 }
-                selected.tab.OnTabChange(true);
+                selectedTab.tab.OnTabChange(true);
             }
             tab.OnDisable();
         }
 
         public EditorTab GetSelected() {
-			return selected.tab;
+			return selectedTab.tab;
 		}
 		
 		public void SetClosable(bool closable) {

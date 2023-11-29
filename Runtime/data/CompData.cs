@@ -201,6 +201,8 @@ namespace mulova.switcher
         /// <returns>true if any of the CompData</returns>
         public List<MemberControl> ListChangedMembers() => ListAttributedMembers().FindAll(m => m.HasChanged(this));
 
+        public List<MemberControl> ListUnchangedMembers() => ListAttributedMembers().FindAll(m => !m.HasChanged(this));
+
         /// <summary>
         /// Use when the value setting order is important like RectTransform
         /// </summary>

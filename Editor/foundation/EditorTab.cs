@@ -11,6 +11,7 @@ namespace mulova.switcher
 	using UnityEditor;
 	using UnityEditor.SceneManagement;
 	using UnityEngine;
+    using Object = UnityEngine.Object;
 
     public abstract class EditorTab {
 
@@ -19,6 +20,7 @@ namespace mulova.switcher
         private string warning = string.Empty;
         private string info = string.Empty;
         protected TabbedEditorWindow window { get; private set; }
+		protected Object targetObject => window.serializedObject?.targetObject;
 
         public EditorTab(TabbedEditorWindow window)
         {
@@ -60,7 +62,7 @@ namespace mulova.switcher
 		/// </summary>
 		public abstract void OnFocus(bool focus);
 		public virtual void OnInspectorUpdate() {}
-		public virtual void OnSelectionChange() {}
+		public virtual void OnSelectionChange(SerializedObject so) {}
 		
 		protected virtual void Repaint() {
 			window.Repaint();
