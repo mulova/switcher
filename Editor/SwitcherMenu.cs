@@ -22,13 +22,13 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate", true, 101)]
+        [MenuItem("GameObject/UI/Switcher/Generate %&s", true, 101)]
         public static bool IsCreateSwitcher()
         {
             return Selection.gameObjects.Length > 1;
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate", false, 101)]
+        [MenuItem("GameObject/UI/Switcher/Generate %&s", false, 101)]
         public static void CreateSwitcher()
         {
             CreateSwitcher(false);
@@ -92,14 +92,14 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/UI/Switcher/Spread Out", true, 102)]
+        [MenuItem("GameObject/UI/Switcher/Spread Out %&#s", true, 102)]
         public static bool IsSpreadOut()
         {
             return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>();
         }
 
 
-        [MenuItem("GameObject/UI/Switcher/Spread Out", false, 102)]
+        [MenuItem("GameObject/UI/Switcher/Spread Out %&#s", false, 102)]
         public static void SpreadOut()
         {
             Selection.activeGameObject.GetComponent<Switcher>().SpreadOut();
