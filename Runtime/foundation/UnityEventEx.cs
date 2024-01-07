@@ -12,6 +12,18 @@ namespace mulova.switcher
 
     public static class UnityEventEx
     {
+        public static bool HasPersistentCall(this UnityEventBase e, string methodName)
+        {
+            for (int i=0; i< e.GetPersistentEventCount(); ++i)
+            {
+                if (e.GetPersistentMethodName(i) == methodName)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static object GetPersistentCall(this UnityEventBase e, int i)
         {
             var calls = typeof(UnityEventBase).GetField("m_PersistentCalls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);

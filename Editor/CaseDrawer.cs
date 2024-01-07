@@ -6,12 +6,13 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace mulova.switcher
 {
+    using UnityEngine;
+    using UnityEditor;
+
     [CustomPropertyDrawer(typeof(Case))]
     public class CaseDrawer : PropertyDrawerBase
     {

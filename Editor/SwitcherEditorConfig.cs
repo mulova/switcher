@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace mulova.switcher
 {
-    public class SwitcherConfig : ScriptableObject
+    public class SwitcherEditorConfig : ScriptableObject
     {
         public const string PATH = "Assets/Editor/switcher_config.asset";
 
@@ -18,13 +18,17 @@ namespace mulova.switcher
         public bool deleteCases = true;
         [Tooltip("Don't extract diff from the RectTransfrom driven from other script")]
         public bool ignoreDrivenRectTransform = true;
-        [Tooltip("Don't extract difference from nested switcher GameObject")]
-        public bool bypassNestedSwitcher = false;
+        [Tooltip("bypass extracting differences from the nested switcher GameObject and it's children")]
+        public bool bypassNestedSwitcherTree = false;
+        [Tooltip("record nested switcher cases")]
+        public bool recordNestedSwitcherData = false;
         [Tooltip("Default Tab Count for CompareTab")]
         public int compareTabCount = 0;
+        [Tooltip("Log type for the error")]
+        public LogType exceptionLogType = LogType.Error;
 
-        private static SwitcherConfig _instance;
-        public static SwitcherConfig instance
+        private static SwitcherEditorConfig _instance;
+        public static SwitcherEditorConfig instance
         {
             get
             {
@@ -38,10 +42,10 @@ namespace mulova.switcher
 
         public static void Reload()
         {
-            _instance = AssetDatabase.LoadAssetAtPath<SwitcherConfig>(PATH);
+            _instance = AssetDatabase.LoadAssetAtPath<SwitcherEditorConfig>(PATH);
             if (_instance == null)
             {
-                _instance = CreateInstance<SwitcherConfig>();
+                _instance = CreateInstance<SwitcherEditorConfig>();
                 var dir = new DirectoryInfo(Path.GetDirectoryName(PATH));
                 if (!dir.Exists)
                 {

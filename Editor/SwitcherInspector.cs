@@ -9,6 +9,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
+    using UnityEngine.UI;
 
     [CustomEditor(typeof(Switcher)), CanEditMultipleObjects]
     public class SwitcherInspector : Editor
@@ -35,6 +36,7 @@ namespace mulova.switcher
                     activeSet.Add(c.name);
                 }
             }
+            CaseDrawer.rename = false;
         }
 
         internal static bool IsPreset(IList<string> actives)
@@ -146,7 +148,7 @@ namespace mulova.switcher
                 if (c.changed)
                 {
                     serializedObject.ApplyModifiedProperties();
-                    switcher.Refresh();
+                    switcher.Reset();
                 }
             }
             if (switcher.cases.Count == 0)
@@ -195,7 +197,7 @@ namespace mulova.switcher
                     }
                 }
             }
-            if (showMisc)
+            if (showMisc || !switcher.caseSensitive)
             {
                 using (var c = new EditorGUI.ChangeCheckScope())
                 {

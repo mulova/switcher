@@ -81,7 +81,7 @@ namespace mulova.switcher
                 {
                     Undo.DestroyObjectImmediate(selected[i]);
                 }
-                if (!SwitcherConfig.instance.deleteCases)
+                if (!SwitcherEditorConfig.instance.deleteCases)
                 {
                     selected[0].GetComponent<Switcher>().SpreadOut(rootData, false);
                 }
@@ -143,7 +143,7 @@ namespace mulova.switcher
                 DiffExtractor.CreateMissingComponent(rootTrans, rootTrans);
                 for (int i=1; i < rootTrans.Count; ++i)
                 {
-                    DiffExtractor.ReplaceRefs(rootTrans[i], rootTrans[i], rootTrans[0]);
+                    DiffExtractor.ReplaceRefs(rootTrans[i], rootTrans[0], rootTrans[i], rootTrans[0]);
                 }
                 if (DiffExtractor.IsComponentMatch(rootTrans))
                 {

@@ -7,12 +7,14 @@
 namespace mulova.switcher
 {
     using System;
+    using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
 
     public class SwitcherCompareWindow : TabbedEditorWindow, IHasCustomMenu
     {
         private int compareCount = 2;
+        internal HashSet<int> hideData { get; private set; } = new();
         public override UnityEngine.Object targetObject => Selection.activeGameObject != null ? Selection.activeGameObject.GetComponent<Switcher>() : null;
 
         protected override void CreateTabs()
@@ -20,9 +22,9 @@ namespace mulova.switcher
             titleContent.text = "Switcher";
             ShowAllTab(true);
             OnSelectionChange();
-            if (SwitcherConfig.instance.compareTabCount != 0)
+            if (SwitcherEditorConfig.instance.compareTabCount != 0)
             {
-                compareCount = Mathf.Min(compareCount, SwitcherConfig.instance.compareTabCount);
+                compareCount = Mathf.Min(compareCount, SwitcherEditorConfig.instance.compareTabCount);
             }
             syncScroll = true;
         }

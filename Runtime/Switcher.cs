@@ -1,4 +1,5 @@
-﻿//----------------------------------------------
+﻿
+//----------------------------------------------
 // Unity3D UI switch library
 // License: The MIT License ( http://opensource.org/licenses/MIT )
 // Copyright mulova@gmail.com
@@ -31,10 +32,12 @@ namespace mulova.switcher
 
         public Case this[int i] => cases[i];
 
+        public static LogType errorLogType = LogType.Warning;
         private ILogger log => Debug.unityLogger;
 
-        public void Refresh()
+        public void Reset()
         {
+            applySet.Clear();
             indexDic.Clear();
             for (int i = 0; i < cases.Count; ++i)
             {
@@ -45,7 +48,6 @@ namespace mulova.switcher
         public Case GetCase(object key) => cases[NormalizeKey(key)];
 
         public bool Contains(object o) => Contains(NormalizeKey(o));
-
         public bool Contains(int i) => i >= 0 && i < cases.Count && applySet.Contains(i);
 
         public bool IsKey(object key) => applySet.Count == 1 && applySet.Contains(NormalizeKey(key));
@@ -229,18 +231,30 @@ namespace mulova.switcher
 
         private int NormalizeKey(object o)
         {
-            if (indexDic.Count == 0)
+            if (o is int i0)
             {
-                Refresh();
+                return i0;
+            } else if (o is bool b)
+            {
+                return b ? 1 : 0;
             }
-            var key = caseSensitive ? o.ToString() : o.ToString().ToLower();
+
+            if (indexDic.Count == 0 || indexDic.Count != cases.Count)
+            {
+                Reset();
+            }
+            var key = o switch
+            {
+                Enum e => caseSensitive ? e.ToStringCached() : e.ToStringLowerCached(),
+                _ => caseSensitive ? o.ToString() : o.ToString().ToLower()
+            };
             if (indexDic.TryGetValue(key, out var i))
             {
                 return i;
             }
             else
             {
-                log.LogFormat(LogType.Error, this, "Missing key {0}", o);
+                log.LogFormat(errorLogType, this, "Missing key {0}", o);
                 return -1;
             }
         }
@@ -248,7 +262,7 @@ namespace mulova.switcher
         public void Clear()
         {
             cases.Clear();
-            applySet.Clear();
+            Reset();
         }
 
         public void Apply(params object[] index) => Apply((IReadOnlyList<object>)index);
@@ -341,7 +355,7 @@ namespace mulova.switcher
                         }
                         catch (Exception ex)
                         {
-                            log.LogFormat(LogType.Error, this, "[{0}] Case {1}\n{2}", name, c.name, ex);
+                            log.LogFormat(errorLogType, this, "[{0}] Case {1}\n{2}", name, c.name, ex);
                         }
                     }
                     c.action?.Invoke(c.name);
@@ -354,7 +368,7 @@ namespace mulova.switcher
             //}
             if (match != applySet.Count)
             {
-                log.LogFormat(LogType.Error, this, "Missing key exists among {0}", string.Join('.', applySet));
+                log.LogFormat(errorLogType, this, "Missing key exists");
             }
         }
 

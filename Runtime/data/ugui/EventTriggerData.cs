@@ -43,14 +43,14 @@ namespace mulova.switcher
             return base.ValueEquals(v0, v1);
         }
 
-        public override void ProcessMatchingRefs(object val, Transform rc, Transform r0)
+        protected override void ProcessMatchingRefs(object val, object val0, Transform rc, Transform r0)
         {
             if (val is Entry e)
             {
                 e.callback.ReplaceMatchingTarget(rc, r0);
             } else
             {
-                base.ProcessMatchingRefs(val, rc, r0);
+                base.ProcessMatchingRefs(val, val0, rc, r0);;
             }
         }
 

@@ -7,7 +7,6 @@
 namespace mulova.switcher
 {
     using System;
-    using System.Reflection;
     using UnityEngine;
 
     [Serializable]
@@ -19,7 +18,7 @@ namespace mulova.switcher
         [HideInInspector] public bool localRotation_mod;
         [Store] public Vector3 localScale;
         [HideInInspector] public bool localScale_mod;
-        [Store] public bool enabled;
+        [Store, Rename("Active")] public bool enabled;
         [HideInInspector] public bool enabled_mod;
 
         [SerializeField] protected Transform _target;

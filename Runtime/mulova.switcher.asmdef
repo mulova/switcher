@@ -2,8 +2,7 @@
     "name": "mulova.switcher",
     "rootNamespace": "",
     "references": [
-        "Unity.TextMeshPro",
-        "MackySoft.SerializeReferenceExtensions"
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

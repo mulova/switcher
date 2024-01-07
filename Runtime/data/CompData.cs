@@ -76,7 +76,7 @@ namespace mulova.switcher
 
         public void SetValue(MemberControl m, Component c) => SetValue(m, c, GetValue(m));
 
-        public virtual void Collect(Component src, bool changedOnly)
+        public void Collect(Component src, bool changedOnly)
         {
             target = src;
             var members = ListAttributedMembers();
@@ -219,7 +219,7 @@ namespace mulova.switcher
             return ListAttributedMembers().Find(m => m.name == name);
         }
 
-        public void ReplaceRefs(Component comp, Transform rc, Transform r0)
+        public void ReplaceRefs(Component comp, Component comp0, Transform rc, Transform r0)
         {
             var members = ListAttributedMembers();
             foreach (var m in members)
@@ -227,15 +227,14 @@ namespace mulova.switcher
                 try
                 {
                     var val = GetValueFrom(m, comp);
+                    var val0 = GetValueFrom(m, comp0);
                     if (val != null && rc != r0)
                     {
                         if (val is IList list)
                         {
-                            for (int i=0; i<list.Count; ++i)
-                            {
-                                ProcessMatchingRefs(list[i], rc, r0);
-                            }
-                        } else
+                            ProcessMatchingList(list, val0 as IList, rc, r0);
+                        }
+                        else
                         {
                             if (val is Component c)
                             {
@@ -255,7 +254,7 @@ namespace mulova.switcher
                                 }
                             } else
                             {
-                                ProcessMatchingRefs(val, rc, r0);
+                                ProcessMatchingRefs(val, val0, rc, r0);
                             }
                         }
                     }
@@ -267,7 +266,15 @@ namespace mulova.switcher
             }
         }
 
-        public virtual void ProcessMatchingRefs(object val, Transform rc, Transform r0)
+        protected virtual void ProcessMatchingList(IList list, IList list0, Transform rc, Transform r0)
+        {
+            for (int i = 0; i < list.Count; ++i)
+            {
+                ProcessMatchingRefs(list[i], list0[i] ,rc, r0);
+            }
+        }
+
+        protected virtual void ProcessMatchingRefs(object val, object val0, Transform rc, Transform r0)
         {
             if (typeof(UnityEventBase).IsAssignableFrom(val.GetType()))
             {

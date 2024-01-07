@@ -7,7 +7,6 @@
 namespace mulova.switcher
 {
     using UnityEngine;
-    using UnityEngine.Assertions;
 
     public static class ComponentEx
     {

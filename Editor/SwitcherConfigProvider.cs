@@ -20,14 +20,14 @@ namespace mulova.switcher
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
             // This function is called when the user clicks on the Replay element in the Settings window.
-            config = new SerializedObject(SwitcherConfig.instance);
+            config = new SerializedObject(SwitcherEditorConfig.instance);
         }
 
         public override void OnGUI(string searchContext)
         {
             if (GUILayout.Button("Go to config"))
             {
-                Selection.activeObject = AssetDatabase.LoadAssetAtPath<SwitcherConfig>(SwitcherConfig.PATH);
+                Selection.activeObject = AssetDatabase.LoadAssetAtPath<SwitcherEditorConfig>(SwitcherEditorConfig.PATH);
             }
         }
 

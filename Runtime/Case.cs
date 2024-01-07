@@ -6,11 +6,12 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Events;
 
 namespace mulova.switcher
 {
+    using UnityEngine;
+
     [Serializable]
     public class SwitcherEvent : UnityEvent<string>
     {
@@ -37,6 +38,18 @@ namespace mulova.switcher
         public bool IsApplied()
         {
             return data.TrueForAll(d => d != null && d.IsApplied());
+        }
+
+        public T GetComponent<T>() where T:Component
+        {
+            foreach (var d in data)
+            {
+                if (typeof(T).IsAssignableFrom(d.GetType()))
+                {
+                    return (T)d.target;
+                }
+            }
+            return default;
         }
 
         public object Clone()

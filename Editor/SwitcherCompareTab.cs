@@ -9,6 +9,7 @@ namespace mulova.switcher
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
+    using static UnityEngine.GUILayout;
 
     public class SwitcherCompareTab : EditorTab
     {
@@ -41,7 +42,7 @@ namespace mulova.switcher
             }
         }
 
-        private List<int> addIndex = new List<int>();
+        private List<int> addIndex = new ();
         public override void OnInspectorGUI()
         {
             if (switcher == null || setIndex >= switcher.cases.Count)
@@ -56,16 +57,27 @@ namespace mulova.switcher
                 var deleteIndex = -1;
                 for (int i = 0; i < set.data.Count; ++i)
                 {
+                    if (win.hideData.Contains(i))
+                    {
+                        continue;
+                    }
                     var d = set.data[i];
                     if (d != null)
                     {
                         var type = d.target != null ? d.target.GetType() : typeof(Object);
-                        var t = EditorGUILayout.ObjectField(d.target, type, true) as Component;
-                        if (t != d.target)
+                        using (new HorizontalScope())
                         {
-                            Undo.RecordObject(switcher, "target changed");
-                            d.target = t;
-                            EditorUtility.SetDirty(switcher);
+                            var t = EditorGUILayout.ObjectField(d.target, type, true) as Component;
+                            if (t != d.target)
+                            {
+                                Undo.RecordObject(switcher, "target changed");
+                                d.target = t;
+                                EditorUtility.SetDirty(switcher);
+                            }
+                            if (setIndex == 0 && GUILayout.Button("Hide", GUILayout.ExpandWidth(false)))
+                            {
+                                win.hideData.Add(i);
+                            }
                         }
                         
                         EditorGUI.indentLevel++;

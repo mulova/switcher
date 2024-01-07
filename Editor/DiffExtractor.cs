@@ -16,26 +16,27 @@ namespace mulova.switcher
 
     internal static class DiffExtractor
     {
-        internal static void ReplaceRefs(Transform trans, Transform rc, Transform r0)
+        internal static void ReplaceRefs(Transform trans, Transform trans0, Transform root, Transform root0)
         {
             var comps = trans.GetComponents<Component>();
-            foreach (var c in comps)
+            var comps0 = trans0.GetComponents<Component>();
+            for (var i=0; i<comps.Length; ++i)
             {
-                ReplaceRefs(c, rc, r0);
+                ReplaceRefs(comps[i], comps0[i], root, root0);
             }
             // Recursive call
-            foreach (Transform child in trans)
+            for (var i=0; i<trans.GetSerializedChildCount(); ++i)
             {
-                ReplaceRefs(child, rc, r0);
+                ReplaceRefs(trans.GetSerializedChild(i), trans0.GetSerializedChild(i), root, root0);
             }
         }
 
-        private static void ReplaceRefs(Component c, Transform rc, Transform r0)
+        private static void ReplaceRefs(Component c, Component c0, Transform root, Transform root0)
         {
             var data = CompDataFactory.instance.GetComponentData(c);
             if (data != null)
             {
-                data.ReplaceRefs(c, rc, r0);
+                data.ReplaceRefs(c, c0, root, root0);
             }
         }
 
@@ -63,7 +64,7 @@ namespace mulova.switcher
                     if (found == null)
                     {
                         var clone = CloneSibling(c.comp, p, insertIndex);
-                        ReplaceRefs(clone, c.root, roots[ip]);
+                        ReplaceRefs(clone, c.comp, c.root, roots[ip]);
                         clone.gameObject.SetActive(false);
                         ++insertIndex;
                     }
@@ -181,7 +182,7 @@ namespace mulova.switcher
                     if (found == null)
                     {
                         var clone = CloneComponent(c.comp, o, insertIndex);
-                        ReplaceRefs(clone, c.root, roots[ip]);
+                        ReplaceRefs(clone, c.comp, c.root, roots[ip]);
                         clone.enabled = false;
                         ++insertIndex;
                     }
@@ -208,7 +209,7 @@ namespace mulova.switcher
             static List<Behaviour> GetAllComponents(Transform t)
             {
                 var all = t.GetComponents<Behaviour>();
-                var filtered = all.Where(c => c.GetType() != typeof(Switcher));
+                var filtered = SwitcherEditorConfig.instance.recordNestedSwitcherData? all: all.Where(c => c.GetType() != typeof(Switcher));
                 return filtered.ToList();
             }
 
@@ -305,14 +306,19 @@ namespace mulova.switcher
             {
                 return;
             }
-            var isNestedSwitcher = depth > 0 && SwitcherConfig.instance.bypassNestedSwitcher && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
+            var bypassSwitcherTree = depth > 0 && SwitcherEditorConfig.instance.bypassNestedSwitcherTree && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
             Component[][] comps = null;
-            if (isNestedSwitcher)
+            if (bypassSwitcherTree)
             {
-                comps = current.ConvertAll(p => new Component[] { p.GetComponent<Transform>()});
+                comps = current.ConvertAll(t => new Component[] { t.GetComponent<Transform>()});
             } else
             {
-                comps = current.ConvertAll(p => p.GetComponents<Component>().FindAll(c=> !(c is Switcher) && (extractRootDiff || depth != 0 || !(c is Transform))).ToArray());
+                comps = current.ConvertAll(t => t.GetComponents<Component>().FindAll(c=>
+                {
+                    var transformCondition = !(c is Transform) || extractRootDiff || depth != 0;
+                    var switcherCondition = !(c is Switcher) || (SwitcherEditorConfig.instance.recordNestedSwitcherData && depth != 0);
+                    return transformCondition && switcherCondition;
+                }).ToArray());
             }
             for (int i = 0; i < comps[0].Length; ++i)
             {
@@ -325,12 +331,15 @@ namespace mulova.switcher
                     c.Postprocess(compDatas);
                 }
             }
-            
-            // child diff
-            for (int i=0; i < current[0].GetSerializedChildCount(); ++i)
+
+            if (!bypassSwitcherTree)
             {
-                var children = current.ConvertAll(p => p.GetSerializedChild(i));
-                GetDiffRecursively(roots, children, store, depth+1, extractRootDiff);
+                // child diff
+                for (int i=0; i < current[0].GetSerializedChildCount(); ++i)
+                {
+                    var children = current.ConvertAll(p => p.GetSerializedChild(i));
+                    GetDiffRecursively(roots, children, store, depth+1, extractRootDiff);
+                }
             }
         }
 
@@ -341,20 +350,20 @@ namespace mulova.switcher
         /// <param name="comps">return Component data if all components' data are the same.</param>
         private static void GetMatchingComponentDiff(Transform[] roots, Component[][] comps, int index, List<CompData>[] store)
         {
-            var arr = new CompData[comps.Length];
-            for (int i = 0; i < arr.Length; ++i)
+            var data = new CompData[comps.Length];
+            for (int i = 0; i < data.Length; ++i)
             {
-                arr[i] = CompDataFactory.instance.GetComponentData(comps[i][index]);
+                data[i] = CompDataFactory.instance.GetComponentData(comps[i][index]);
             }
-            if (arr[0] != null)
+            if (data[0] != null)
             {
-                var diff = GetDiffs(arr);
+                var diff = GetDiffs(data);
                 if (diff)
                 {
-                    for (int i = 0; i < arr.Length; ++i)
+                    for (int i = 0; i < data.Length; ++i)
                     {
-                        arr[i].target = arr[0].target;
-                        store[i].Add(arr[i]);
+                        data[i].target = data[0].target;
+                        store[i].Add(data[i]);
                     }
                 }
             }
@@ -403,7 +412,7 @@ namespace mulova.switcher
                         {
                             changed = !((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
                         }
-                        else if (SwitcherConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r && r.drivenByObject != null)
+                        else if (SwitcherEditorConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r && r.drivenByObject != null)
                         {
                             // driven change is ignored
                         }
@@ -500,7 +509,9 @@ namespace mulova.switcher
             var count = -1;
             for (int i = 0; i < objs.Count; ++i)
             {
-                comps[i] = objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
+                comps[i] = SwitcherEditorConfig.instance.recordNestedSwitcherData?
+                    objs[i].GetComponents<Component>().ToList():
+                    objs[i].GetComponents<Component>().FindAll(co => !(co is Switcher));
                 if (i == 0)
                 {
                     count = comps[i].Count;
