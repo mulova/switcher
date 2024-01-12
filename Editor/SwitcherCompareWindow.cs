@@ -74,11 +74,21 @@ namespace mulova.switcher
         public void AddItemsToMenu(GenericMenu menu)
         {
             menu.AddItem(new GUIContent("Toggle Add"), isAdd, ToggleAdd);
+            menu.AddItem(new GUIContent("Add Empty Data"), false, AddComponentData);
         }
 
         private void ToggleAdd()
         {
             isAdd = !isAdd;
+        }
+
+        private void AddComponentData()
+        {
+            if (selected == null)
+            {
+                return;
+            }
+            selected.cases.ForEach(c => c.data.Add(null));
         }
     }
 }

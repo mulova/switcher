@@ -66,7 +66,8 @@ namespace mulova.switcher
                 case SerializedPropertyType.BoundsInt:
                     return p.boundsIntValue;
                 default:
-                    throw new Exception("Unreachable");
+                    return default;
+                    //throw new Exception("Unreachable");
             }
         }
 
@@ -147,7 +148,8 @@ namespace mulova.switcher
                     p.boundsIntValue = (BoundsInt)val;
                     break;
                 default:
-                    throw new Exception("Unreachable");
+                    break;
+                    //throw new Exception("Unreachable");
             }
         }
     }

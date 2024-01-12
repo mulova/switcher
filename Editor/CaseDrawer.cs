@@ -164,9 +164,9 @@ namespace mulova.switcher
             var separator = 0;
             float height = 0;
 
-            dataHeight = switcher.showData ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("data")): 0;
+            dataHeight = switcher.showData ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative(nameof(Case.data))): 0;
             height += dataHeight;
-            actionHeight = switcher.showAction ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative("action")): 0;
+            actionHeight = switcher.showAction ? (int)EditorGUI.GetPropertyHeight(p.FindPropertyRelative(nameof(Case.action))): 0;
             height += actionHeight;
 
             height += lineHeight + separator;

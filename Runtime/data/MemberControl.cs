@@ -170,7 +170,7 @@ namespace mulova.switcher
 
         private static Dictionary<Type, List<MemberControl>> cache;
 
-        public static List<MemberControl> ListAttributedMembers(Type srcType, Type storeType, Action<List<MemberControl>> sorter)
+        public static List<MemberControl> ListAttributedMembers(Type srcType, Type storeType, IReadOnlyList<string> memberOrder)
         {
             if (cache == null)
             {
@@ -224,10 +224,32 @@ namespace mulova.switcher
                         }
                     }
                 }
-                sorter?.Invoke(list);
+                if (memberOrder != null)
+                {
+                    Sort(list, memberOrder);
+                }
                 cache[srcType] = list;
             }
             return list;
+
+            static void Sort(List<MemberControl> members, IReadOnlyList<string> order)
+            {
+                members.Sort((a, b) =>
+                {
+                    foreach (var o in order)
+                    {
+                        if (a.name == o)
+                        {
+                            return -1;
+                        }
+                        else if (b.name == o)
+                        {
+                            return 1;
+                        }
+                    }
+                    return a.name.CompareTo(b.name);
+                });
+            }
         }
     }
 }

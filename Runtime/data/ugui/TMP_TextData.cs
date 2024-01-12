@@ -7,6 +7,7 @@
 namespace Studio.Common.Ui
 {
     using System;
+    using System.Collections.Generic;
     using mulova.switcher;
     using TMPro;
     using UnityEngine;
@@ -147,5 +148,25 @@ namespace Studio.Common.Ui
         //public virtual float renderedWidth => GetRenderedWidth();
         //public virtual float renderedHeight => GetRenderedHeight();
         //public int layoutPriority => m_layoutPriority;
+
+        protected override IReadOnlyList<string> memberOrder => new[] { nameof(font), nameof(fontSharedMaterial) };
+
+        public override void SetValue(MemberControl m, Component c, object value)
+        {
+            base.SetValue(m, c, value);
+
+            var isMaterialInstance = (fontSharedMaterial_mod && m.name == nameof(fontSharedMaterial))
+                || (outlineColor_mod && m.name == nameof(outlineColor))
+                || (faceColor_mod && m.name == nameof(faceColor))
+                || (outlineWidth_mod && m.name == nameof(outlineWidth));
+            if (isMaterialInstance)
+            {
+                _target.fontMaterial = fontSharedMaterial;
+                if (Application.isPlaying)
+                {
+                    var mat = _target.fontMaterial;
+                }
+            }
+        }
     }
 }

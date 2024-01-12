@@ -25,6 +25,8 @@ namespace mulova.switcher
         [Store] public Vector2 sizeDelta;
         [HideInInspector] public bool sizeDelta_mod;
 
+        protected override IReadOnlyList<string> memberOrder => new[] { nameof(enabled), nameof(pivot), nameof(sizeDelta), nameof(anchorMin), nameof(anchorMax), nameof(anchoredPosition) };
+
         public override Type srcType => typeof(RectTransform);
 
         public override void SetValue(MemberControl m, Component c, object val)
@@ -49,25 +51,6 @@ namespace mulova.switcher
                 base.SetValue(m, c, val);
                 (c as RectTransform).hasChanged = true;
             }
-        }
-
-        protected override void SortMembers(List<MemberControl> members)
-        {
-            var order = new[] { nameof(enabled), nameof(pivot), nameof(sizeDelta), nameof(anchorMin), nameof(anchorMax), nameof(anchoredPosition) };
-            members.Sort((a, b) =>
-            {
-                foreach (var o in order)
-                {
-                    if (a.name == o)
-                    {
-                        return -1;
-                    } else if (b.name == o)
-                    {
-                        return 1;
-                    }
-                }
-                return a.name.CompareTo(b.name);
-            });
         }
 
         protected override bool IsCollectable(MemberControl m, Component c)

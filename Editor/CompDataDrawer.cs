@@ -20,14 +20,20 @@ namespace mulova.switcher
             drawRect.height = EditorGUIUtility.singleLineHeight;
 
             var data = property.GetValue() as CompData;
-            foreach (var m in data.ListAttributedMembers())
+            if (data != null)
             {
-                if (m.HasChanged(data))
+                foreach (var m in data.ListAttributedMembers())
                 {
-                    var p = property.FindPropertyRelative(m.name);
-                    EditorGUI.PropertyField(drawRect, p);
-                    drawRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                    if (m.HasChanged(data))
+                    {
+                        var p = property.FindPropertyRelative(m.name);
+                        EditorGUI.PropertyField(drawRect, p);
+                        drawRect.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                    }
                 }
+            } else
+            {
+                EditorGUI.PropertyField(rect, property, label, true);
             }
         }
 
@@ -35,12 +41,18 @@ namespace mulova.switcher
         {
             int count = 0;
             var data = property.GetValue() as CompData;
-            foreach (var m in data.ListAttributedMembers())
+            if (data != null)
             {
-                if (m.HasChanged(data))
+                foreach (var m in data.ListAttributedMembers())
                 {
-                    count++;
+                    if (m.HasChanged(data))
+                    {
+                        count++;
+                    }
                 }
+            } else
+            {
+                count = 1;
             }
             return count * EditorGUIUtility.singleLineHeight + Mathf.Max(count-1, 0) * EditorGUIUtility.standardVerticalSpacing;
         }

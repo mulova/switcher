@@ -207,11 +207,11 @@ namespace mulova.switcher
         /// Use when the value setting order is important like RectTransform
         /// </summary>
         /// <param name="members"></param>
-        protected virtual void SortMembers(List<MemberControl> members) { }
+        protected virtual IReadOnlyList<string> memberOrder { get; }
 
         public List<MemberControl> ListAttributedMembers()
         {
-            return MemberControl.ListAttributedMembers(srcType, GetType(), SortMembers);
+            return MemberControl.ListAttributedMembers(srcType, GetType(), memberOrder);
         }
 
         public MemberControl GetMember(string name)

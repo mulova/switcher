@@ -48,5 +48,29 @@ namespace mulova.switcher
             base.ApplyTo(c);
             (c as Switcher).Reset();
         }
+
+        public override bool MemberEquals(MemberControl m, object v0, object v1)
+        {
+            if (m.name == nameof(cases))
+            {
+                var c0 = v0 as List<Case>;
+                var c1 = v1 as List<Case>;
+                if (c0.Count != c1.Count)
+                {
+                    return false;
+                }
+                for (int i=0; i<c0.Count; ++i)
+                {
+                    if (c0[i].name != c1[i].name)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            } else
+            {
+                return base.MemberEquals(m, v0, v1);
+            }
+        }
     }
 }

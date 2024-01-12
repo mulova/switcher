@@ -22,7 +22,22 @@ namespace mulova.switcher
         [HideInInspector] public bool caseSensitive = true;
 
         private HashSet<int> applySet = new();
-        private Dictionary<string, int> indexDic = new();
+        private Dictionary<string, int> _indexDic = new();
+        private Dictionary<string, int> indexDic
+        {
+            get
+            {
+                if (_indexDic.Count == 0 || _indexDic.Count != cases.Count)
+                {
+                    _indexDic.Clear();
+                    for (int i = 0; i < cases.Count; ++i)
+                    {
+                        _indexDic[cases[i].name] = i;
+                    }
+                }
+                return _indexDic;
+            }
+        }
         public List<string> allKeys => cases.ConvertAll(s => s.name);
         public bool showAction => cases.Exists(c => c.showAction || c.hasAction);
         public bool hasAction => cases.Exists(s => s.hasAction);
@@ -38,11 +53,6 @@ namespace mulova.switcher
         public void Reset()
         {
             applySet.Clear();
-            indexDic.Clear();
-            for (int i = 0; i < cases.Count; ++i)
-            {
-                indexDic[cases[i].name] = i;
-            }
         }
 
         public Case GetCase(object key) => cases[NormalizeKey(key)];
@@ -239,10 +249,6 @@ namespace mulova.switcher
                 return b ? 1 : 0;
             }
 
-            if (indexDic.Count == 0 || indexDic.Count != cases.Count)
-            {
-                Reset();
-            }
             var key = o switch
             {
                 Enum e => caseSensitive ? e.ToStringCached() : e.ToStringLowerCached(),
