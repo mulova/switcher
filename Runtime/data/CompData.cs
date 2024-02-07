@@ -130,7 +130,7 @@ namespace mulova.switcher
         {
             if (v0 != null)
             {
-                if (v0.GetType().IsAssignableFrom(typeof(IList)))
+                if (typeof(IList).IsAssignableFrom(v0.GetType()))
                 {
                     var l0 = v0 as IList;
                     var l1 = v1 as IList;
