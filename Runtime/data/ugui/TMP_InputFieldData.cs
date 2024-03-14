@@ -103,7 +103,7 @@ namespace mulova.switcher
         [Store] public TMP_InputValidator inputValidator;
         [HideInInspector] public bool inputValidator_mod;
 
-        protected override bool IsCollectable(MemberControl m, Component c)
+        protected override bool IsCollectable(MemberControl m)
         {
             switch (m.name)
             {

@@ -84,7 +84,7 @@ namespace mulova.switcher
             {
                 if (!changedOnly || m.HasChanged(this))
                 {
-                    if (IsCollectable(m, src))
+                    if (IsCollectable(m))
                     {
                         try
                         {
@@ -101,7 +101,7 @@ namespace mulova.switcher
             }
         }
 
-        protected virtual bool IsCollectable(MemberControl m, Component c) => true;
+        protected virtual bool IsCollectable(MemberControl m) => true;
 
         public virtual void Postprocess(IReadOnlyList<CompData> list) { }
 
@@ -281,6 +281,11 @@ namespace mulova.switcher
                 var e = val as UnityEventBase;
                 e.ReplaceMatchingTarget(rc, r0);
             }
+        }
+
+        public virtual bool IsValid()
+        {
+            return target != null;
         }
     }
 }

@@ -151,33 +151,46 @@ namespace mulova.switcher
                     switcher.Reset();
                 }
             }
-            if (switcher.cases.Count == 0)
+            if (CaseDrawer.rename)
             {
-                EditorGUILayout.Space();
-                EditorGUILayout.Separator();
-
-                if (!string.IsNullOrEmpty(createSwitcherErr))
+                using (new ColorScope(Color.cyan))
                 {
-                    EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
-                }
-            } else if (switcher.cases.Count > 0 && !isMultiple)
-            {
-                if (GUILayout.Button("Open Compare View"))
-                {
-                    SwitcherCompareWindow.Get();
-                }
-                EditorGUILayout.Separator();
-                if (showPreset)
-                {
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("preset"), true);
-                }
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    if (hasPreset && !showPreset)
+                    if (GUILayout.Button("End Rename"))
                     {
-                        if (GUILayout.Button("Preset"))
+                        CaseDrawer.rename = false;
+                    }
+                }
+            }
+            else
+            {
+                if (switcher.cases.Count == 0)
+                {
+                    EditorGUILayout.Space();
+                    EditorGUILayout.Separator();
+
+                    if (!string.IsNullOrEmpty(createSwitcherErr))
+                    {
+                        EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
+                    }
+                } else if (switcher.cases.Count > 0 && !isMultiple)
+                {
+                    if (GUILayout.Button("Open Compare View"))
+                    {
+                        SwitcherCompareWindow.Get();
+                    }
+                    EditorGUILayout.Separator();
+                    if (showPreset)
+                    {
+                        EditorGUILayout.PropertyField(serializedObject.FindProperty("preset"), true);
+                    }
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (hasPreset && !showPreset)
                         {
-                            showPreset = true;
+                            if (GUILayout.Button("Preset"))
+                            {
+                                showPreset = true;
+                            }
                         }
                     }
                 }

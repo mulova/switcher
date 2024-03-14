@@ -22,5 +22,14 @@ namespace mulova.switcher
                 return null;
             }
         }
+        
+        public static void gameObjectSetActive(this Component c, bool visible)
+        {
+            if (c == null)
+            {
+                return;
+            }
+            c.gameObject.SetActive(visible);
+        }
     }
 }

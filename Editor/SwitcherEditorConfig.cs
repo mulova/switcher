@@ -16,8 +16,6 @@ namespace mulova.switcher
 
         [Tooltip("Delete other cases except the main case when generating switcher")]
         public bool deleteCases = true;
-        [Tooltip("Don't extract diff from the RectTransfrom driven from other script")]
-        public bool ignoreDrivenRectTransform = true;
         [Tooltip("bypass extracting differences from the nested switcher GameObject and it's children")]
         public bool bypassNestedSwitcherTree = false;
         [Tooltip("record nested switcher cases")]

@@ -60,6 +60,8 @@ namespace mulova.switcher
             return c;
         }
 
+        public bool IsValid() => data.TrueForAll(d => d.IsValid());
+
         public override string ToString()
         {
             return name;

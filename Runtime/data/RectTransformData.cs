@@ -4,6 +4,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System.Reflection;
+
 namespace mulova.switcher
 {
     using System;
@@ -31,11 +33,7 @@ namespace mulova.switcher
 
         public override void SetValue(MemberControl m, Component c, object val)
         {
-            if (m.memberType == typeof(bool) && m.name == nameof(enabled))
-            {
-                c.gameObject.SetActive((bool)val);
-            }
-            else if (m.memberType == typeof(Vector3) && m.name == nameof(localPosition))
+            if (m.memberType == typeof(Vector3) && m.name == nameof(localPosition))
             {
                 // skip
             } else if (m.memberType == typeof(Vector2) && m.name == nameof(anchoredPosition))
@@ -53,14 +51,35 @@ namespace mulova.switcher
             }
         }
 
-        protected override bool IsCollectable(MemberControl m, Component c)
+        protected override bool IsCollectable(MemberControl m)
         {
+            var drivenField = typeof(RectTransform).GetProperty("drivenProperties", MemberControl.PROPERTY_FLAG);
+            var drivenProperties = (DrivenTransformProperties)drivenField.GetValue(target);
             switch (m.name)
             {
                 case nameof(localPosition):
                     return false;
+                case nameof(anchorMax):
+                    return IsFree(drivenProperties, DrivenTransformProperties.AnchorMax);
+                case nameof(anchorMin):
+                    return IsFree(drivenProperties, DrivenTransformProperties.AnchorMin);
+                case nameof(sizeDelta):
+                    return IsFree(drivenProperties, DrivenTransformProperties.SizeDelta);
+                case nameof(pivot):
+                    return IsFree(drivenProperties, DrivenTransformProperties.Pivot);
+                case nameof(localScale):
+                    return IsFree(drivenProperties, DrivenTransformProperties.Scale);
+                case nameof(anchoredPosition):
+                    return IsFree(drivenProperties, DrivenTransformProperties.AnchoredPosition);
                 default:
                     return true;
+            }
+
+            // static bool IsFree(DrivenTransformProperties prop, DrivenTransformProperties flag) => (prop & flag) == 0;
+            static bool IsFree(DrivenTransformProperties prop, DrivenTransformProperties flag)
+            {
+                var isFree = prop & flag;
+                return isFree == DrivenTransformProperties.None;
             }
         }
     }

@@ -315,20 +315,34 @@ namespace mulova.switcher
             {
                 comps = current.ConvertAll(t => t.GetComponents<Component>().FindAll(c=>
                 {
-                    var transformCondition = !(c is Transform) || extractRootDiff || depth != 0;
                     var switcherCondition = !(c is Switcher) || (SwitcherEditorConfig.instance.recordNestedSwitcherData && depth != 0);
-                    return transformCondition && switcherCondition;
+                    return switcherCondition;
                 }).ToArray());
             }
             for (int i = 0; i < comps[0].Length; ++i)
             {
                 GetMatchingComponentDiff(roots, comps, i, store);
             }
-            foreach (var compDatas in store)
+            foreach (var compDataList in store)
             {
-                foreach (var c in compDatas)
+                foreach (var c in compDataList)
                 {
-                    c.Postprocess(compDatas);
+                    c.Postprocess(compDataList);
+                }
+            }
+
+            // erase root position of RectTransform
+            if (depth == 0 && !extractRootDiff)
+            {
+                foreach (var s in store)
+                {
+                    foreach (var d in s)
+                    {
+                        if (d is RectTransformData rtd && roots.IndexOf(r => r == d.target) >= 0)
+                        {
+                            rtd.anchoredPosition_mod = false;
+                        }
+                    }
                 }
             }
 
@@ -374,7 +388,6 @@ namespace mulova.switcher
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
             var isTransform = typeof(Transform).IsAssignableFrom(data[0].srcType);
-            var rectChanged = false;
             foreach (var m in members)
             {
                 var changed = false;
@@ -412,31 +425,16 @@ namespace mulova.switcher
                         {
                             changed = !((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
                         }
-                        else if (SwitcherEditorConfig.instance.ignoreDrivenRectTransform && data[0].target is RectTransform r && r.drivenByObject != null)
-                        {
-                            // driven change is ignored
-                        }
                         else
                         {
                             changed = true;
                         }
                     }
                 }
-                if (typeof(RectTransform).IsAssignableFrom(data[0].srcType) && m.name != "enabled" && changed)
-                {
-                    rectChanged = true;
-                }
                 anyChanged |= changed;
                 foreach (var d in data)
                 {
                     m.SetChanged(d, changed);
-                }
-            }
-            if (rectChanged)
-            {
-                foreach (var s in data)
-                {
-                    members.Find(m => m.name == "anchoredPosition").SetChanged(s, true);
                 }
             }
             return anyChanged;

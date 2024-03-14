@@ -95,14 +95,22 @@ namespace mulova.switcher
         [MenuItem("GameObject/UI/Switcher/Spread Out", true, 102)]
         public static bool IsSpreadOut()
         {
-            return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>();
+            return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>() != null;
         }
 
 
         [MenuItem("GameObject/UI/Switcher/Spread Out %#&S", false, 102)]
         public static void SpreadOut()
         {
-            Selection.activeGameObject.GetComponent<Switcher>().SpreadOut();
+            var switcher = Selection.activeGameObject.GetComponent<Switcher>();
+            if (switcher != null)
+            {
+                switcher.SpreadOut();
+            }
+            else
+            {
+                Debug.Log("No switcher selected");
+            }
         }
 
         [MenuItem("GameObject/UI/Switcher/Merge Switchers", true, 103)]

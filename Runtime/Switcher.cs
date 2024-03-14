@@ -384,6 +384,8 @@ namespace mulova.switcher
             return new SwitcherDisposer(this, endKey);
         }
 
+        public bool IsValid() => cases.TrueForAll(c => c.IsValid());
+
 #if UNITY_EDITOR
         [ContextMenu("Spread out")]
         public void SpreadOut()

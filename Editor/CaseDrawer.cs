@@ -84,8 +84,8 @@ namespace mulova.switcher
             {
 
                 GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("Collect"), false, handleItemClicked, "Collect");
                 menu.AddItem(new GUIContent("Rename"), false, handleItemClicked, "Rename");
+                menu.AddItem(new GUIContent("Collect"), false, handleItemClicked, "Collect");
                 if (!switcher.hasAction)
                 {
                     menu.AddItem(new GUIContent("Actions"), false, handleItemClicked, "Actions");
