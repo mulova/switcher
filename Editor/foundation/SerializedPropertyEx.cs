@@ -29,6 +29,8 @@ namespace mulova.switcher
                     return p.colorValue;
                 case SerializedPropertyType.ObjectReference:
                     return p.objectReferenceValue;
+                case SerializedPropertyType.ManagedReference:
+                    return p.managedReferenceValue;
                 case SerializedPropertyType.LayerMask:
                     return p.intValue;
                 case SerializedPropertyType.Enum:
@@ -146,6 +148,9 @@ namespace mulova.switcher
                     break;
                 case SerializedPropertyType.BoundsInt:
                     p.boundsIntValue = (BoundsInt)val;
+                    break;
+                case SerializedPropertyType.ManagedReference:
+                    p.managedReferenceValue = val;
                     break;
                 default:
                     break;

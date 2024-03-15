@@ -20,18 +20,28 @@ namespace mulova.switcher
 
         public CompData GetComponentData(Component c)
         {
-            var dataType = FindDataType(c.GetType());
+            var data = GetComponentData(c.GetType());
+            if (data != null)
+            {
+                data.Collect(c, false);
+            }
+
+            return data;
+        }
+        
+        public CompData GetComponentData(Type compType)
+        {
+            var dataType = FindDataType(compType);
             if (dataType != null)
             {
-                var o = Activator.CreateInstance(dataType) as CompData;
-                o.Collect(c, false);
-                return o;
+                return Activator.CreateInstance(dataType) as CompData;
             }
             else
             {
                 return null;
             }
         }
+
 
         public void RegisterCustomDataType(Type compType, Type dataType)
         {

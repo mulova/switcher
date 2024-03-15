@@ -4,6 +4,11 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
 namespace mulova.switcher
 {
     using UnityEditor;
@@ -14,9 +19,10 @@ namespace mulova.switcher
     [CustomPropertyDrawer(typeof(CompData), true)]
     public class CompDataDrawer : PropertyDrawer
     {
+        private Type type;
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
-            Rect drawRect = rect;
+            var drawRect = rect;
             drawRect.height = EditorGUIUtility.singleLineHeight;
 
             var data = property.GetValue() as CompData;
@@ -33,7 +39,37 @@ namespace mulova.switcher
                 }
             } else
             {
-                EditorGUI.PropertyField(rect, property, label, true);
+                var s = property.serializedObject.targetObject as Switcher;
+                var comps = s.gameObject.GetComponentsInChildren<Component>();
+                var types = comps.Select(c => c.GetType()).Distinct().Where(t=> CompDataFactory.instance.FindDataType(t) != null).ToArray();
+                Array.Sort(types, (a,b)=> a.FullName.CompareTo(b.FullName));
+                if (type == null)
+                {
+                    type = types[0];
+                }
+
+                var btnWidth = 70;
+                var popupRect = rect;
+                var btnRect = rect;
+                popupRect.width -= btnWidth;
+                btnRect.x += popupRect.width;
+                btnRect.width = btnWidth;
+                EditorGUIEx.Popup(popupRect, "Type", ref type, types);
+                if (GUI.Button(btnRect, "Add"))
+                {
+                    var regex = new Regex("cases\\.Array\\.data\\[(?<caseNo>[0-9]+)\\].data.Array.data\\[(?<dataNo>[0-9]+)\\]");
+                    var match = regex.Match(property.propertyPath);
+                    var dataIndex = int.Parse(match.Groups["dataNo"].Value);
+                    for (int c = 0; c < s.cases.Count; ++c)
+                    {
+                        var path = SwitcherCompareTab.GetDataPropertyPath(c, dataIndex);
+                        var prop = property.serializedObject.FindProperty(path);
+                        var inst = CompDataFactory.instance.GetComponentData(type);
+                        var m = inst.GetMember("enabled");
+                        m.SetChanged(inst, true);
+                        prop.SetValue(inst);
+                    }
+                }
             }
         }
 

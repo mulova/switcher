@@ -64,7 +64,7 @@ namespace mulova.switcher
                     var d = set.data[dataIndex];
                     if (d != null)
                     {
-                        var type = d.target != null ? d.target.GetType() : typeof(Object);
+                        var type = d.srcType;
                         using (new HorizontalScope())
                         {
                             using (new EnableScope(caseIndex == 0))
@@ -178,7 +178,10 @@ namespace mulova.switcher
 
                 if (deleteIndex >= 0)
                 {
-                    Undo.RecordObject(switcher, "Remove "+ switcher.cases[0].data[deleteIndex].ToString());
+                    if (switcher.cases[0].data[deleteIndex] != null)
+                    {
+                        Undo.RecordObject(switcher, "Remove "+ switcher.cases[0].data[deleteIndex].ToString());
+                    }
                     for (int i = 0; i < switcher.cases.Count; ++i)
                     {
                         switcher.cases[i].data.RemoveAt(deleteIndex);
