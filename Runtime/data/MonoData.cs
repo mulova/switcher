@@ -4,6 +4,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System.Collections.Generic;
+
 namespace mulova.switcher
 {
     using System;
@@ -19,11 +21,14 @@ namespace mulova.switcher
         public override Type srcType => typeof(T);
 
         [SerializeField] protected T _target;
+        
         public override Component target
         {
-            get { return _target; }
-            set { _target = value as T; }
+            get => _target;
+            set => _target = value as T;
         }
+
+        public T targetCasted => _target;
     }
 }
 

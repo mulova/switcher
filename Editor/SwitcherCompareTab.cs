@@ -95,24 +95,27 @@ namespace mulova.switcher
                                 {
                                     foreach (var m in members)
                                     {
-                                        using (new EditorGUILayout.HorizontalScope())
+                                        using (var scope = new EnableScope(m.IsUiActive(c)))
                                         {
-                                            var p = FindMemberProperty(so, caseIndex, dataIndex, m.name);
-                                            EditorGUILayout.PropertyField(p);
-                                            if (GUILayout.Button("-", GUILayout.Width(20)))
+                                            using (new EditorGUILayout.HorizontalScope())
                                             {
-                                                if (members.Count == 1 && deleteIndex < 0)
+                                                var p = FindMemberProperty(so, caseIndex, dataIndex, m.name);
+                                                EditorGUILayout.PropertyField(p);
+                                                if (GUILayout.Button("-", GUILayout.Width(20)))
                                                 {
-                                                    deleteIndex = dataIndex;
-                                                }
-                                                else
-                                                {
-                                                    for (int s = 0; s < switcher.cases.Count; ++s)
+                                                    if (members.Count == 1 && deleteIndex < 0)
                                                     {
-                                                        var isSet = FindMemberProperty(so, s, dataIndex, m.name+MemberControl.MOD_SUFFIX);
-                                                        if (isSet != null)
+                                                        deleteIndex = dataIndex;
+                                                    }
+                                                    else
+                                                    {
+                                                        for (int s = 0; s < switcher.cases.Count; ++s)
                                                         {
-                                                            isSet.boolValue = false;
+                                                            var isSet = FindMemberProperty(so, s, dataIndex, m.name+MemberControl.MOD_SUFFIX);
+                                                            if (isSet != null)
+                                                            {
+                                                                isSet.boolValue = false;
+                                                            }
                                                         }
                                                     }
                                                 }

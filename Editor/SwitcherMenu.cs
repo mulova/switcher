@@ -198,49 +198,6 @@ namespace mulova.switcher
                 switcher = root0.AddComponent<Switcher>();
                 Undo.RegisterCreatedObjectUndo(switcher, root0.name);
             }
-            // Get Visibility Diffs
-            var showDiffs = new List<List<TransformData>>();
-            for (int i = 0; i < tDiffs.Length; ++i)
-            {
-                showDiffs.Add(new List<TransformData>());
-            }
-            for (int c = 0; c < tDiffs[0].Count; ++c)
-            {
-                bool diff = false;
-                for (int i = 1; i < tDiffs.Length && !diff; ++i)
-                {
-                    diff |= tDiffs[0][c].active != tDiffs[i][c].active;
-                }
-                if (diff)
-                {
-                    for (int i = 0; i < tDiffs.Length; ++i)
-                    {
-                        showDiffs[i].Add(tDiffs[i][c]);
-                    }
-                }
-            }
-
-            // Get Position Diffs
-            var posDiffs = new List<List<TransformData>>();
-            for (int i = 0; i < tDiffs.Length; ++i)
-            {
-                posDiffs.Add(new List<TransformData>());
-            }
-            for (int c = 0; c < tDiffs[0].Count; ++c)
-            {
-                bool diff = false;
-                for (int i = 1; i < tDiffs.Length && !diff; ++i)
-                {
-                    diff |= !tDiffs[0][c].TransformEquals(tDiffs[i][c]);
-                }
-                if (diff)
-                {
-                    for (int i = 0; i < tDiffs.Length; ++i)
-                    {
-                        posDiffs[i].Add(tDiffs[i][c]);
-                    }
-                }
-            }
 
             for (int i = 0; i < roots.Count; ++i)
             {

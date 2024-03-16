@@ -4,6 +4,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System.Collections.Generic;
+
 namespace mulova.switcher
 {
     using System;

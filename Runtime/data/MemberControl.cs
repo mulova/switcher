@@ -251,6 +251,40 @@ namespace mulova.switcher
                 });
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is MemberControl that)
+            {
+                return srcField == that.srcField && srcProperty == that.srcProperty && storeField == that.storeField && storeModField == that.storeModField;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            var hash = 0;
+            if (srcField != null)
+            {
+                hash = srcField.GetHashCode();
+            }
+            if (srcProperty != null)
+            {
+                hash = hash *37 + srcProperty.GetHashCode();
+            }
+            if (storeField != null)
+            {
+                hash = hash *37 + storeField.GetHashCode();
+            }
+            if (storeModField != null)
+            {
+                hash = hash *37 + storeModField.GetHashCode();
+            }
+            return hash;
+        }
     }
 }
 

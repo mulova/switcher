@@ -29,17 +29,11 @@ namespace mulova.switcher
         [Store] public AnimationTriggers animationTriggers;
         [HideInInspector] public bool animationTriggers_mod;
 
-        public override bool MemberEquals(MemberControl m, object val1, object val2)
+        public override bool ValueEquals(object val1, object val2) => val1 switch
         {
-            if (m.IsTypeOf(typeof(AnimationTriggers)))
-            {
-                return TriggerEquals(val1 as AnimationTriggers, val2 as AnimationTriggers);
-            }
-            else
-            {
-                return base.MemberEquals(m, val1, val2);
-            }
-        }
+            AnimationTriggers t1 => TriggerEquals(t1, val2 as AnimationTriggers),
+            _ => base.ValueEquals(val1, val2)
+        };
 
         public static bool TriggerEquals(AnimationTriggers t1, AnimationTriggers t2)
         {

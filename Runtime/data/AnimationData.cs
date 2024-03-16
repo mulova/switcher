@@ -19,12 +19,11 @@ namespace mulova.switcher
         [Store] public WrapMode wrapMode;
         [HideInInspector] public bool wrapMode_mod;
 
-        public override void ApplyTo(Component c)
+        protected override void OnApplyEnd()
         {
-            base.ApplyTo(c);
             if (Application.isPlaying)
             {
-                _target.Play(clip.name);
+                targetCasted.Play(clip.name);
             }
         }
     }

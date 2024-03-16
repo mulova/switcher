@@ -26,6 +26,7 @@ namespace mulova.switcher
                 {
                     Debug.LogError($"Case data count mismatch between {rc.name} and {r0.name}");
                 }
+
                 for (var id = 0; id < cases[0].data.Count; ++id)
                 {
                     if (cases[0].data[id].srcType != that.data[id].srcType)
@@ -33,44 +34,36 @@ namespace mulova.switcher
                         Debug.LogError($"data type mismatch between {rc.name}({id}) and {r0.name}({id})");
                         break;
                     }
+
                     var case0 = val0 as Case;
                     that.data[id].target = case0.data[id].target;
                 }
-            } else
+            }
+            else
             {
                 base.ProcessMatchingRefs(val, val0, rc, r0);
             }
 
         }
 
-        public override void ApplyTo(Component c)
+        protected override void OnApplyEnd()
         {
-            base.ApplyTo(c);
-            (c as Switcher).Reset();
+            targetCasted.Reset();
         }
 
-        public override bool MemberEquals(MemberControl m, object v0, object v1)
+        public override bool ValueEquals(object v0, object v1) => v0 switch
         {
-            if (m.name == nameof(cases))
+            Case c0 => CaseEquals(c0, v1 as Case),
+            _ => base.ValueEquals(v0, v1)
+        };
+
+        public static bool CaseEquals(Case c0, Case c1)
+        {
+            if (c0.name != c1.name)
             {
-                var c0 = v0 as List<Case>;
-                var c1 = v1 as List<Case>;
-                if (c0.Count != c1.Count)
-                {
-                    return false;
-                }
-                for (int i=0; i<c0.Count; ++i)
-                {
-                    if (c0[i].name != c1[i].name)
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            } else
-            {
-                return base.MemberEquals(m, v0, v1);
+                return false;
             }
+            return true;
         }
     }
 }

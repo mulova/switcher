@@ -18,12 +18,13 @@ namespace mulova.switcher
         public abstract Type srcType { get; }
         public abstract bool active { get; }
         public abstract Component target { get; set; }
+        [HideInInspector] public bool isActiveAndEnabled = true;
         /// <summary>
         /// if srcType is the same, higher priority CompData is used.
         /// </summary>
         public virtual int priority { get; } = 0;
 
-        public virtual void ApplyTo(Component c)
+        public void ApplyTo(Component c)
         {
             var members = ListAttributedMembers();
             foreach (var m in members)
@@ -33,7 +34,10 @@ namespace mulova.switcher
                     SetValue(m, c);
                 }
             }
+            OnApplyEnd();
         }
+        
+        protected virtual void OnApplyEnd() {}
 
         public bool IsApplied()
         {
@@ -72,9 +76,18 @@ namespace mulova.switcher
 
         public virtual object GetValueFrom(MemberControl m, Component c) => m.GetValue(c);
 
-        public virtual void SetValue(MemberControl m, Component c, object value) => m.Apply(c, value);
+        public virtual void SetValue(MemberControl m, Component c, object value)
+        {
+            if (isActiveAndEnabled)
+            {
+                m.Apply(c, value);  
+            }
+        } 
 
-        public void SetValue(MemberControl m, Component c) => SetValue(m, c, GetValue(m));
+        public void SetValue(MemberControl m, Component c)
+        {
+            SetValue(m, c, GetValue(m));
+        }
 
         public void Collect(Component src, bool changedOnly)
         {
@@ -99,6 +112,12 @@ namespace mulova.switcher
                     }
                 }
             }
+
+            isActiveAndEnabled = src switch
+            {
+                Behaviour b => b.isActiveAndEnabled,
+                _ => src.gameObject.activeInHierarchy
+            };
         }
 
         protected virtual bool IsCollectable(MemberControl m) => true;
@@ -126,7 +145,7 @@ namespace mulova.switcher
             return true;
         }
 
-        public virtual bool MemberEquals(MemberControl m, object v0, object v1)
+        public bool MemberEquals(MemberControl m, object v0, object v1)
         {
             if (v0 != null)
             {
@@ -146,7 +165,7 @@ namespace mulova.switcher
                         }
                         for (int i=0; i<l0.Count; ++i)
                         {
-                            if (!MemberEquals(null, l0[i], l1[i]))
+                            if (!ValueEquals(l0[i], l1[i]))
                             {
                                 return false;
                             }
@@ -158,7 +177,10 @@ namespace mulova.switcher
                     return ValueEquals(v0, v1);
                 }
             }
-            return v0 == v1;
+            else
+            {
+                return v1 == null;
+            }
         }
 
         public virtual bool ValueEquals(object v0, object v1)
@@ -182,6 +204,17 @@ namespace mulova.switcher
                         var u1 = v1 as UnityEventBase;
                         return u0.PersistentEventEquals(u1);
                     }
+                case RectOffset r:
+                {
+                    var pad0 = r;
+                    var pad1 = v1 as RectOffset;
+                    return pad0.top == pad1.top
+                           && pad0.bottom == pad1.bottom
+                           && pad0.left == pad1.left
+                           && pad0.right == pad1.right
+                           && pad0.horizontal == pad1.horizontal
+                           && pad0.vertical == pad1.vertical;
+                }
                 default:
                     return v0.Equals(v1);
             }

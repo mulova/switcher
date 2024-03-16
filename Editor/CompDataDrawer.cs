@@ -16,6 +16,11 @@ namespace mulova.switcher
     [CustomPropertyDrawer(typeof(RectTransformData), true)]
     public class RectTransformDataDrawer : CompDataDrawer { }
 
+    public static class MemberControlEx
+    {
+        public static bool IsUiActive(this MemberControl m, CompData c) => c.isActiveAndEnabled || (typeof(Transform).IsAssignableFrom(c.srcType) && m.name == "enabled");
+    }
+
     [CustomPropertyDrawer(typeof(CompData), true)]
     public class CompDataDrawer : PropertyDrawer
     {
@@ -30,6 +35,7 @@ namespace mulova.switcher
             {
                 foreach (var m in data.ListAttributedMembers())
                 {
+                    var enableScope = new EnableScope(m.IsUiActive(data));
                     if (m.HasChanged(data))
                     {
                         var p = property.FindPropertyRelative(m.name);

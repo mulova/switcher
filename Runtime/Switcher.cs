@@ -385,6 +385,26 @@ namespace mulova.switcher
         }
 
         public bool IsValid() => cases.TrueForAll(c => c.IsValid());
+        
+        public IReadOnlyList<MemberControl> ListChangedMembers(int compIndex)
+        {
+            var list = new List<MemberControl>();
+            foreach (var c in cases)
+            {
+                list.AddRange(c.data[compIndex].ListChangedMembers());
+            }
+            return list;
+        }
+        
+        public IReadOnlyList<MemberControl> ListUnchangedMembers(int compIndex)
+        {
+            var list = new List<MemberControl>();
+            foreach (var c in cases)
+            {
+                list.AddRange(c.data[compIndex].ListUnchangedMembers());
+            }
+            return list;
+        }
 
 #if UNITY_EDITOR
         [ContextMenu("Spread out")]

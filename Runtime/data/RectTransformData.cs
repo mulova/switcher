@@ -60,26 +60,26 @@ namespace mulova.switcher
                 case nameof(localPosition):
                     return false;
                 case nameof(anchorMax):
-                    return IsFree(drivenProperties, DrivenTransformProperties.AnchorMax);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.AnchorMax);
                 case nameof(anchorMin):
-                    return IsFree(drivenProperties, DrivenTransformProperties.AnchorMin);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.AnchorMin);
                 case nameof(sizeDelta):
-                    return IsFree(drivenProperties, DrivenTransformProperties.SizeDelta);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.SizeDelta);
                 case nameof(pivot):
-                    return IsFree(drivenProperties, DrivenTransformProperties.Pivot);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.Pivot);
                 case nameof(localScale):
-                    return IsFree(drivenProperties, DrivenTransformProperties.Scale);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.Scale);
                 case nameof(anchoredPosition):
-                    return IsFree(drivenProperties, DrivenTransformProperties.AnchoredPosition);
+                    return !IsFullyDriven(drivenProperties, DrivenTransformProperties.AnchoredPosition);
                 default:
                     return true;
             }
 
             // static bool IsFree(DrivenTransformProperties prop, DrivenTransformProperties flag) => (prop & flag) == 0;
-            static bool IsFree(DrivenTransformProperties prop, DrivenTransformProperties flag)
+            static bool IsFullyDriven(DrivenTransformProperties prop, DrivenTransformProperties flag)
             {
-                var isFree = prop & flag;
-                return isFree == DrivenTransformProperties.None;
+                var driven = prop & flag;
+                return driven == flag;
             }
         }
     }
