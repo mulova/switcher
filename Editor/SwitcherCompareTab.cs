@@ -95,7 +95,7 @@ namespace mulova.switcher
                                 {
                                     foreach (var m in members)
                                     {
-                                        using (var scope = new EnableScope(m.IsUiActive(c)))
+                                        using (var scope = new EnableScope(switcher.IsChangeable(set, c, m)))
                                         {
                                             using (new EditorGUILayout.HorizontalScope())
                                             {

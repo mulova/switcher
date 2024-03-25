@@ -26,6 +26,7 @@ namespace mulova.switcher
 
         public bool showAction { get; set; } = false; // editor only
         internal bool hasAction => action != null && action.GetPersistentEventCount() > 0;
+        public bool IsValid() => data.TrueForAll(d => d.IsValid());
 
         public bool isValid
         {
@@ -35,10 +36,7 @@ namespace mulova.switcher
             }
         }
 
-        public bool IsApplied()
-        {
-            return data.TrueForAll(d => d != null && d.IsApplied());
-        }
+        public bool IsApplied() => data.TrueForAll(d => d != null && d.IsApplied());
 
         public T GetComponent<T>() where T:Component
         {
@@ -52,6 +50,8 @@ namespace mulova.switcher
             return default;
         }
 
+        public T GetCompData<T>(GameObject o) where T:CompData => data.Find(d => d.target != null && d.target.gameObject == o && d is T) as T;
+        
         public object Clone()
         {
             Case c = new Case();
@@ -59,8 +59,6 @@ namespace mulova.switcher
             c.data = new List<CompData>(data);
             return c;
         }
-
-        public bool IsValid() => data.TrueForAll(d => d.IsValid());
 
         public override string ToString()
         {

@@ -78,7 +78,7 @@ namespace mulova.switcher
 
         public virtual void SetValue(MemberControl m, Component c, object value)
         {
-            if (isActiveAndEnabled)
+            if (isActiveAndEnabled || m.name == nameof(Behaviour.enabled))
             {
                 m.Apply(c, value);  
             }
@@ -115,7 +115,7 @@ namespace mulova.switcher
 
             isActiveAndEnabled = src switch
             {
-                Behaviour b => b.isActiveAndEnabled,
+                Behaviour b => b.gameObject.activeInHierarchy,
                 _ => src.gameObject.activeInHierarchy
             };
         }

@@ -68,6 +68,11 @@ namespace mulova.switcher
             }
         }
 
+        public bool IsGameObjectActive()
+        {
+            return !enabled_mod || enabled;
+        }
+
         public virtual bool TransformEquals(TransformData that)
         {
             return this.localPosition.ApproximatelyEquals(that.localPosition)

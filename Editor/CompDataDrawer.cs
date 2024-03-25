@@ -18,7 +18,10 @@ namespace mulova.switcher
 
     public static class MemberControlEx
     {
-        public static bool IsUiActive(this MemberControl m, CompData c) => c.isActiveAndEnabled || (typeof(Transform).IsAssignableFrom(c.srcType) && m.name == "enabled");
+        public static bool IsUiActive(this MemberControl m, CompData c)
+        {
+            return c.isActiveAndEnabled || (typeof(Transform).IsAssignableFrom(c.srcType) && m.name == "enabled");
+        }
     }
 
     [CustomPropertyDrawer(typeof(CompData), true)]
@@ -35,7 +38,7 @@ namespace mulova.switcher
             {
                 foreach (var m in data.ListAttributedMembers())
                 {
-                    var enableScope = new EnableScope(m.IsUiActive(data));
+                    // using var enableScope = new EnableScope(m.IsUiActive(data));
                     if (m.HasChanged(data))
                     {
                         var p = property.FindPropertyRelative(m.name);

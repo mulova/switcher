@@ -3,14 +3,12 @@
 // License: The MIT License ( http://opensource.org/licenses/MIT )
 // Copyright mulova@gmail.com
 //----------------------------------------------
-
 namespace mulova.switcher
 {
     using System.Collections.Generic;
     using UnityEditor;
     using UnityEngine;
-    using UnityEngine.UI;
-
+    
     [CustomEditor(typeof(Switcher)), CanEditMultipleObjects]
     public class SwitcherInspector : Editor
     {
@@ -151,46 +149,34 @@ namespace mulova.switcher
                     switcher.Reset();
                 }
             }
-            if (CaseDrawer.rename)
+            
+            if (switcher.cases.Count == 0)
             {
-                using (new ColorScope(Color.cyan))
-                {
-                    if (GUILayout.Button("End Rename"))
-                    {
-                        CaseDrawer.rename = false;
-                    }
-                }
-            }
-            else
-            {
-                if (switcher.cases.Count == 0)
-                {
-                    EditorGUILayout.Space();
-                    EditorGUILayout.Separator();
+                EditorGUILayout.Space();
+                EditorGUILayout.Separator();
 
-                    if (!string.IsNullOrEmpty(createSwitcherErr))
-                    {
-                        EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
-                    }
-                } else if (switcher.cases.Count > 0 && !isMultiple)
+                if (!string.IsNullOrEmpty(createSwitcherErr))
                 {
-                    if (GUILayout.Button("Open Compare View"))
+                    EditorGUILayout.HelpBox(createSwitcherErr, MessageType.Error);
+                }
+            } else if (switcher.cases.Count > 0 && !isMultiple)
+            {
+                if (GUILayout.Button("Open Compare View"))
+                {
+                    SwitcherCompareWindow.Get();
+                }
+                EditorGUILayout.Separator();
+                if (showPreset)
+                {
+                    EditorGUILayout.PropertyField(serializedObject.FindProperty("preset"), true);
+                }
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (hasPreset && !showPreset)
                     {
-                        SwitcherCompareWindow.Get();
-                    }
-                    EditorGUILayout.Separator();
-                    if (showPreset)
-                    {
-                        EditorGUILayout.PropertyField(serializedObject.FindProperty("preset"), true);
-                    }
-                    using (new EditorGUILayout.HorizontalScope())
-                    {
-                        if (hasPreset && !showPreset)
+                        if (GUILayout.Button("Preset"))
                         {
-                            if (GUILayout.Button("Preset"))
-                            {
-                                showPreset = true;
-                            }
+                            showPreset = true;
                         }
                     }
                 }

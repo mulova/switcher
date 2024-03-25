@@ -405,6 +405,28 @@ namespace mulova.switcher
             }
             return list;
         }
+        
+        public bool IsChangeable(Case c, CompData data, MemberControl m)
+        {
+            if (data.target == null)
+            {
+                return false;
+            }
+            var t = data.target.transform;
+            var end = transform.parent;
+            // return true only when the TransformData.enabled in the hierarchy is true or 'enabled' field 
+            while (end != t)
+            {
+                var found = c.GetCompData<TransformData>(t.gameObject);
+                if (found != null && !found.IsGameObjectActive())
+                {
+                    return found?.target == data.target.transform && data is TransformData && m.name == nameof(TransformData.enabled);
+                }
+                t = t.parent;
+            }
+            return true;
+        }
+
 
 #if UNITY_EDITOR
         [ContextMenu("Spread out")]

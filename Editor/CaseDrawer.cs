@@ -79,43 +79,56 @@ namespace mulova.switcher
                     }
                 }
             }
-            //GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(switcher); // Prevent information lost because collected CompData.target values are lost when the prefab is applied.
-            if (EditorGUI.DropdownButton(nameBounds[1], new GUIContent("Options"), FocusType.Passive))
+            if (rename)
             {
-
-                GenericMenu menu = new GenericMenu();
-                menu.AddItem(new GUIContent("Rename"), false, handleItemClicked, "Rename");
-                menu.AddItem(new GUIContent("Collect"), false, handleItemClicked, "Collect");
-                if (!switcher.hasAction)
+                using (new ColorScope(Color.cyan))
                 {
-                    menu.AddItem(new GUIContent("Actions"), false, handleItemClicked, "Actions");
-                }
-                menu.DropDown(nameBounds[1]);
-
-                void handleItemClicked(object o)
-                {
-                    var param = o as string;
-                    switch (param)
+                    if (GUI.Button(nameBounds[1], "End Rename"))
                     {
-                        case "Collect":
-                            if (EditorUtility.DisplayDialog("Warning", "Collect and override data from variables/properties?", "Ok", "Cancel"))
-                            {
-                                var targets = GetAllTargets(p);
-                                Undo.RecordObjects(targets, "Collect");
-                                switcher.Collect(n.stringValue, true);
-                                EditorUtil.SetDirty(switcher);
-                            }
-                            break;
-                        case "Rename":
-                            rename = !rename;
-                            break;
-                        case "Actions":
-                            var c = switcher.GetCase(n.stringValue);
-                            c.showAction = !c.showAction;
-                            break;
+                        rename = false;
                     }
                 }
             }
+            else
+            {
+                if (EditorGUI.DropdownButton(nameBounds[1], new GUIContent("Options"), FocusType.Passive))
+                {
+
+                    GenericMenu menu = new GenericMenu();
+                    menu.AddItem(new GUIContent("Rename"), false, handleItemClicked, "Rename");
+                    menu.AddItem(new GUIContent("Collect"), false, handleItemClicked, "Collect");
+                    if (!switcher.hasAction)
+                    {
+                        menu.AddItem(new GUIContent("Actions"), false, handleItemClicked, "Actions");
+                    }
+                    menu.DropDown(nameBounds[1]);
+
+                    void handleItemClicked(object o)
+                    {
+                        var param = o as string;
+                        switch (param)
+                        {
+                            case "Collect":
+                                if (EditorUtility.DisplayDialog("Warning", "Collect and override data from variables/properties?", "Ok", "Cancel"))
+                                {
+                                    var targets = GetAllTargets(p);
+                                    Undo.RecordObjects(targets, "Collect");
+                                    switcher.Collect(n.stringValue, true);
+                                    EditorUtil.SetDirty(switcher);
+                                }
+                                break;
+                            case "Rename":
+                                rename = !rename;
+                                break;
+                            case "Actions":
+                                var c = switcher.GetCase(n.stringValue);
+                                c.showAction = !c.showAction;
+                                break;
+                        }
+                    }
+                }
+            }
+            //GUI.enabled = !PrefabUtility.IsPartOfPrefabInstance(switcher); // Prevent information lost because collected CompData.target values are lost when the prefab is applied.
             GUI.enabled = true;
 
             // Draw Actions
