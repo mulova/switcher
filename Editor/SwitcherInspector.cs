@@ -158,6 +158,7 @@ namespace mulova.switcher
                     if (GUILayout.Button("End Rename"))
                     {
                         CaseDrawer.rename = false;
+                        switcher.Reset();
                     }
                 }
             }

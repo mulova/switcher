@@ -18,7 +18,7 @@ namespace mulova.switcher
 
     public static class MemberControlEx
     {
-        public static bool IsUiActive(this MemberControl m, CompData c) => c.isActiveAndEnabled || (typeof(Transform).IsAssignableFrom(c.srcType) && m.name == "enabled");
+        public static bool IsUiActive(this MemberControl m, CompData c) => c.isActiveAndEnabled || m.name == "enabled";
     }
 
     [CustomPropertyDrawer(typeof(CompData), true)]

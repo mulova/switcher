@@ -55,6 +55,11 @@ namespace mulova.switcher
             applySet.Clear();
         }
 
+        public void Rename()
+        {
+            _indexDic.Clear();
+        }
+
         public Case GetCase(object key) => cases[NormalizeKey(key)];
 
         public bool Contains(object o) => Contains(NormalizeKey(o));
@@ -260,8 +265,17 @@ namespace mulova.switcher
             }
             else
             {
-                log.LogFormat(errorLogType, this, "Missing key {0}", o);
-                return -1;
+                i = cases.FindIndex(c => c.name == key);
+                if (i >= 0)
+                {
+                    indexDic[key] = i;
+                    return i;
+                }
+                else
+                {
+                    log.LogFormat(errorLogType, this, "Missing key {0}", o);
+                    return -1;
+                }
             }
         }
 

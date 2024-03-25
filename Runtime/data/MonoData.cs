@@ -29,6 +29,18 @@ namespace mulova.switcher
         }
 
         public T targetCasted => _target;
+
+        public override void SetValue(MemberControl m, Component c, object value)
+        {
+            if (m.name == nameof(enabled))
+            {
+                m.Apply(c, value);
+            }
+            else
+            {
+                base.SetValue(m, c, value);
+            }
+        }
     }
 }
 
