@@ -4,6 +4,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using System.Text.RegularExpressions;
+
 namespace mulova.switcher
 {
     using System;
@@ -156,6 +158,13 @@ namespace mulova.switcher
                     break;
                     //throw new Exception("Unreachable");
             }
+        }
+
+        public static int GetArrayIndex(this SerializedProperty property)
+        {
+            var regex = new Regex("Array\\.data\\[(?<index>[0-9]+)\\]");
+            var match = regex.Match(property.propertyPath);
+            return int.Parse(match.Groups["index"].Value);
         }
     }
 }

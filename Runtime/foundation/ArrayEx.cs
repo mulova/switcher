@@ -183,23 +183,6 @@ namespace mulova.switcher
 			}
 		}
 
-		public static void ForEachIndex<T>(this T[] arr, Action<T, int> action)
-		{
-			if (arr == null || action == null)
-			{
-				return;
-			}
-			for (int i=0; i<arr.Length; ++i)
-			{
-#pragma warning disable RECS0017 // Possible compare of value type with 'null'
-                if (arr[i] != null)
-#pragma warning restore RECS0017 // Possible compare of value type with 'null'
-                {
-                    action(arr[i], i);
-				}
-			}
-		}
-
 		public static void Fill<T>(this T[] arr, T val) {
 			if (arr == null) {
 				return;

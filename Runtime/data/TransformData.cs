@@ -34,14 +34,14 @@ namespace mulova.switcher
             set { _target = value as Transform; }
         }
 
-        public override void SetValue(MemberControl m, Component c, object val)
+        public override void ApplyValue(MemberControl m, Component c, object val)
         {
             if (m.memberType == typeof(bool) && m.name == nameof(enabled))
             {
                 c.gameObject.SetActive((bool)val);
             } else
             {
-                base.SetValue(m, c, val);
+                base.ApplyValue(m, c, val);
             }
             (c as Transform).hasChanged = true;
         }

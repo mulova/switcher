@@ -151,9 +151,9 @@ namespace Studio.Common.Ui
 
         protected override IReadOnlyList<string> memberOrder => new[] { nameof(font), nameof(fontSharedMaterial) };
 
-        public override void SetValue(MemberControl m, Component c, object value)
+        public override void ApplyValue(MemberControl m, Component c, object value)
         {
-            base.SetValue(m, c, value);
+            base.ApplyValue(m, c, value);
 
             var isMaterialInstance = (fontSharedMaterial_mod && m.name == nameof(fontSharedMaterial))
                 || (outlineColor_mod && m.name == nameof(outlineColor))

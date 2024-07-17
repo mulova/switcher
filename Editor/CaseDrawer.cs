@@ -40,7 +40,8 @@ namespace mulova.switcher
             var bounds = bound.SplitByHeights(lineHeight);
             var n = p.FindPropertyRelative("name");
             var active = SwitcherInspector.IsActive(n.stringValue);
-            var nameBounds = bounds[0].SplitByWidthsRatio(0.75f, 0.25f);
+            var numBounds = bounds[0].SplitByWidths(30);
+            var nameBounds = numBounds[1].SplitByWidthsRatio(0.75f, 0.25f);
             var boundsLeft = bounds[1];
             // indentation
             boundsLeft.x += 30;
@@ -50,6 +51,8 @@ namespace mulova.switcher
             {
                 c = SelectedColor;
             }
+            
+            EditorGUI.LabelField(numBounds[0], p.GetArrayIndex().ToString());
 
             // Draw Title
             if (rename || !IsValidId(n))

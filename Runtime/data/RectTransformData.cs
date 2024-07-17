@@ -31,7 +31,7 @@ namespace mulova.switcher
 
         public override Type srcType => typeof(RectTransform);
 
-        public override void SetValue(MemberControl m, Component c, object val)
+        public override void ApplyValue(MemberControl m, Component c, object val)
         {
             if (m.memberType == typeof(Vector3) && m.name == nameof(localPosition))
             {
@@ -46,13 +46,21 @@ namespace mulova.switcher
             }
             else
             {
-                base.SetValue(m, c, val);
+                base.ApplyValue(m, c, val);
                 (c as RectTransform).hasChanged = true;
             }
         }
 
-        protected override bool IsCollectable(MemberControl m)
+        public override bool IsCollectable(Component c, MemberControl m)
         {
+            if (!base.IsCollectable(c, m))
+            {
+                return false;
+            }
+            if (c == null)
+            {
+                return false;
+            }
             var drivenField = typeof(RectTransform).GetProperty("drivenProperties", MemberControl.PROPERTY_FLAG);
             var drivenProperties = (DrivenTransformProperties)drivenField.GetValue(target);
             switch (m.name)

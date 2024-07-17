@@ -319,7 +319,7 @@ namespace mulova.switcher
                     return switcherCondition;
                 }).ToArray());
             }
-            for (int i = 0; i < comps[0].Length; ++i)
+            for (var i = 0; i < comps[0].Length; ++i)
             {
                 GetMatchingComponentDiff(roots, comps, i, store);
             }
@@ -387,54 +387,41 @@ namespace mulova.switcher
         {
             var members = MemberControl.ListAttributedMembers(data[0].srcType, data[0].GetType(), null);
             var anyChanged = false;
-            var isTransform = typeof(Transform).IsAssignableFrom(data[0].srcType);
             foreach (var m in members)
             {
-                var changed = false;
-                var v0 = data[0].GetValue(m);
-                for (int i = 1; i < data.Count && !changed; ++i)
+                var collectIndex = new List<int>();
+                for (var i=0; i<data.Count; ++i)
                 {
-                    var active = data[i].target.gameObject.activeSelf;
-                    if (data[0].target.gameObject.activeSelf != active) // ignore disabled behaviour values
+                    if (data[i].IsCollectable(data[i].target, m))
                     {
-                        if (isTransform && m.name == "enabled")
-                        {
-                            changed = true; // store GameObject.SetActive
-                        }
+                        collectIndex.Add(i);
                     }
-                    if (data[i].target is Behaviour b && !b.isActiveAndEnabled && m.name != "enabled")
+                }
+
+                var changed = false;
+                if (collectIndex.Count > 1)
+                {
+                    var i0 = collectIndex[0];
+                    for (int i=1; i<collectIndex.Count; ++i)
                     {
-                        continue;
-                    }
-                    var vi = data[i].GetValue(m);
-                    if (v0 == null ^ vi == null)
-                    {
-                        changed = true;
-                    } else if (v0 is Object o0 && vi is Object oi)
-                    {
-                        if (o0 == null && oi == null)
-                        {
-                        } else if (o0 != oi)
-                        {
-                            changed = true;
-                        }
-                    }
-                    else if (v0 != null && !data[0].MemberEquals(m, v0, vi))
-                    {
-                        if (m.isReference && v0.GetType() == vi.GetType())
-                        {
-                            changed = !((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
-                        }
-                        else
+                        if (!data[i0].MemberEquals(data[collectIndex[i]], m))
                         {
                             changed = true;
                         }
                     }
                 }
+                else if (collectIndex.Count == 1)
+                {
+                    // 유효한 값이 하나일 때는 첫 component 에 할당한다.
+                    var i = collectIndex[0];
+                    var val = data[i].GetValue(m);
+                    m.StoreValue(data[0], val);
+                    m.Apply(data[0].target, val);
+                }
                 anyChanged |= changed;
                 foreach (var d in data)
                 {
-                    m.SetChanged(d, changed);
+                    m.SetChanged(d, changed && d.IsCollectable(d.target, m));
                 }
             }
             return anyChanged;

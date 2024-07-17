@@ -103,8 +103,13 @@ namespace mulova.switcher
         [Store] public TMP_InputValidator inputValidator;
         [HideInInspector] public bool inputValidator_mod;
 
-        protected override bool IsCollectable(MemberControl m)
+        public override bool IsCollectable(Component c, MemberControl m)
         {
+            if (!base.IsCollectable(c, m))
+            {
+                return false;
+            }
+
             switch (m.name)
             {
                 case nameof(caretColor):

@@ -22,6 +22,7 @@ namespace mulova.switcher
         public bool isCustom => srcField == null && srcProperty == null;
         public bool isReference => typeof(Component).IsAssignableFrom(storeField.FieldType);
         public Type memberType => storeField.FieldType;
+        public Type declaringType => srcField?.DeclaringType ?? srcProperty.DeclaringType;
 
         public static readonly BindingFlags INSTANCE_FLAGS = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
         public static readonly BindingFlags FIELD_FLAG = INSTANCE_FLAGS & ~BindingFlags.SetProperty & ~BindingFlags.GetProperty;
@@ -59,7 +60,7 @@ namespace mulova.switcher
             }
         }
 
-        public bool HasChanged(CompData store)
+        public bool IsChanged(CompData store)
         {
             return storeModField == null || (bool)storeModField.GetValue(store);
         }
@@ -71,7 +72,7 @@ namespace mulova.switcher
 
         public bool IsTypeOf(Type type) => type.IsAssignableFrom(memberType);
 
-        public object GetValue(object src)
+        public object GetValue(Component src)
         {
             try
             {
@@ -165,7 +166,7 @@ namespace mulova.switcher
 
         public override string ToString()
         {
-            return $"{memberType.Name}.{name}";
+            return $"{memberType.Name} {declaringType.Name}.{name}";
         }
 
         private static Dictionary<Type, List<MemberControl>> cache;
@@ -185,19 +186,19 @@ namespace mulova.switcher
                     var a = f.GetCustomAttribute<StoreAttribute>();
                     if (a != null)
                     {
-                        var isModField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
-                        if (isModField == null)
+                        var modField = storeType.GetField(f.Name + MOD_SUFFIX, FIELD_FLAG);
+                        if (modField == null)
                         {
                             Debug.LogErrorFormat("{0}.{1}{2} field is missing", f.DeclaringType.FullName, f.Name, MOD_SUFFIX);
                         }
 #if UNITY_EDITOR
-                        if (!Application.isPlaying && isModField != null)
+                        if (!Application.isPlaying && modField != null)
                         {
-                            if (isModField.FieldType != typeof(bool))
+                            if (modField.FieldType != typeof(bool))
                             {
                                 throw new MissingFieldException($"Type of '{f.DeclaringType.FullName}.{f.Name}' is not bool");
                             }
-                            if (isModField.GetCustomAttribute<HideInInspector>() == null)
+                            if (modField.GetCustomAttribute<HideInInspector>() == null)
                             {
                                 Debug.LogError($"'{f.DeclaringType.FullName}.{f.Name}' needs [HideInInspector]");
                             }
@@ -212,13 +213,13 @@ namespace mulova.switcher
                             }
                             else
                             {
-                                var slot = new MemberControl(member[0], f, isModField, a);
+                                var slot = new MemberControl(member[0], f, modField, a);
                                 list.Add(slot);
                             }
                         }
                         else
                         {
-                            var slot = new MemberControl(f, isModField, a);
+                            var slot = new MemberControl(f, modField, a);
                             list.Add(slot);
                             //Debug.LogFormat("Custom member {0}.{1}", srcType.FullName, f.Name);
                         }

@@ -17,6 +17,7 @@ namespace mulova.switcher
     public class Switcher : MonoBehaviour
     {
         public List<Case> cases = new List<Case>();
+        public bool reentrant = false;
         [SerializeField, HideInInspector] public List<SwitchPreset> preset = new List<SwitchPreset>();
         [HideInInspector, SerializeField, EnumType] private string enumType = "";
         [HideInInspector] public bool caseSensitive = true;
@@ -53,6 +54,11 @@ namespace mulova.switcher
         public void Reset()
         {
             applySet.Clear();
+        }
+
+        public void Rename()
+        {
+            _indexDic.Clear();
         }
 
         public Case GetCase(object key) => cases[NormalizeKey(key)];
@@ -260,8 +266,17 @@ namespace mulova.switcher
             }
             else
             {
-                log.LogFormat(errorLogType, this, "Missing key {0}", o);
-                return -1;
+                i = cases.FindIndex(c => c.name == key);
+                if (i >= 0)
+                {
+                    indexDic[key] = i;
+                    return i;
+                }
+                else
+                {
+                    log.LogFormat(errorLogType, this, "Missing key {0}", o);
+                    return -1;
+                }
             }
         }
 
@@ -274,7 +289,7 @@ namespace mulova.switcher
         public void Apply(params object[] index) => Apply((IReadOnlyList<object>)index);
         public void Apply(IReadOnlyList<object> keys)
         {
-            if (IsKeys(keys))
+            if (!reentrant && IsKeys(keys))
             {
                 //log.Debug("Already set");
                 return;
@@ -284,9 +299,10 @@ namespace mulova.switcher
             Apply();
         }
 
+        public object key { get; private set; }
         public void Apply(object key)
         {
-            if (IsKey(key))
+            if (!reentrant && IsKey(key))
             {
                 //log.Debug("Already set");
                 return;
@@ -294,11 +310,12 @@ namespace mulova.switcher
             applySet.Clear();
             AddKey(key);
             Apply();
+            this.key = key;
         }
 
         public void Apply(int index)
         {
-            if (IsIndex(index))
+            if (!reentrant && IsIndex(index))
             {
                 //log.Debug("Already set");
                 return;
@@ -306,6 +323,7 @@ namespace mulova.switcher
             applySet.Clear();
             AddIndex(index);
             Apply();
+            key = index;
         }
 
         public void Apply(params int[] index) => Apply((IReadOnlyList<int>)index);
@@ -323,6 +341,7 @@ namespace mulova.switcher
 
         public void Apply()
         {
+            key = null;
             int match = 0;
             foreach (Case c in cases)
             {
@@ -389,9 +408,17 @@ namespace mulova.switcher
         public IReadOnlyList<MemberControl> ListChangedMembers(int compIndex)
         {
             var list = new List<MemberControl>();
-            foreach (var c in cases)
+            var members = cases[0].data[compIndex].ListAttributedMembers();
+            foreach (var m in members)
             {
-                list.AddRange(c.data[compIndex].ListChangedMembers());
+                foreach (var c in cases)
+                {
+                    if (m.IsChanged(c.data[compIndex]))
+                    {
+                        list.Add(m);
+                        break;
+                    }
+                }
             }
             return list;
         }
@@ -399,9 +426,23 @@ namespace mulova.switcher
         public IReadOnlyList<MemberControl> ListUnchangedMembers(int compIndex)
         {
             var list = new List<MemberControl>();
-            foreach (var c in cases)
+            var members = cases[0].data[compIndex].ListAttributedMembers();
+            foreach (var m in members)
             {
-                list.AddRange(c.data[compIndex].ListUnchangedMembers());
+                var isChanged = false;
+                foreach (var c in cases)
+                {
+                    if (m.IsChanged(c.data[compIndex]))
+                    {
+                        isChanged = true;
+                        break;
+                    }
+                }
+
+                if (!isChanged)
+                {
+                    list.Add(m);
+                }
             }
             return list;
         }
@@ -430,12 +471,12 @@ namespace mulova.switcher
 
 #if UNITY_EDITOR
         [ContextMenu("Spread out")]
-        public void SpreadOut()
+        public void Unpack()
         {
-            SpreadOut(null, true);
+            Unpack(null, true);
         }
 
-        public void SpreadOut(List<RootData> rootData, bool activate)
+        public void Unpack(List<RootData> rootData, bool activate)
         {
             Apply(cases[0].name);
             for (int i = 1; i < cases.Count; ++i)

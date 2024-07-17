@@ -50,7 +50,7 @@ namespace mulova.switcher
             return default;
         }
 
-        public T GetCompData<T>(GameObject o) where T:CompData => data.Find(d => d.target != null && d.target.gameObject == o && d is T) as T;
+        public T GetCompData<T>(GameObject o) where T:CompData => data.Find(d => d?.target != null && d.target.gameObject == o && d is T) as T;
         
         public object Clone()
         {

@@ -22,32 +22,32 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate", true, 101)]
-        public static bool IsCreateSwitcher()
+        [MenuItem("GameObject/UI/Switcher/Pack", true, 101)]
+        public static bool IsPack()
         {
             return Selection.gameObjects.Length > 1;
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate %&S", false, 101)]
-        public static void CreateSwitcher()
+        [MenuItem("GameObject/UI/Switcher/Pack %&S", false, 101)]
+        public static void Pack()
         {
-            CreateSwitcher(false);
+            Pack(false);
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate with root transform", true, 102)]
-        public static bool IsCreateSwitcherWithRootTransform()
+        [MenuItem("GameObject/UI/Switcher/Pack with root transform", true, 102)]
+        public static bool IsPackWithRootTransform()
         {
             return Selection.gameObjects.Length > 1;
         }
 
-        [MenuItem("GameObject/UI/Switcher/Generate with root transform", false, 102)]
-        public static void CreateSwitcherWithRootTransform()
+        [MenuItem("GameObject/UI/Switcher/Pack with root transform", false, 102)]
+        public static void PackWithRootTransform()
         {
-            CreateSwitcher(true);
+            Pack(true);
         }
 
         private static int runFrame;
-        public static void CreateSwitcher(bool extractRootDiff)
+        public static void Pack(bool extractRootDiff)
         {
             var selected = sortedSelection;
             if (selected == null || selected.Count == 1)
@@ -71,7 +71,7 @@ namespace mulova.switcher
             */
 
             var rootData = new List<RootData>();
-            if (CreateSwitcher(selected, extractRootDiff))
+            if (Pack(selected, extractRootDiff))
             {
                 for (int i = 1; i < selected.Count; ++i)
                 {
@@ -83,7 +83,7 @@ namespace mulova.switcher
                 }
                 if (!SwitcherEditorConfig.instance.deleteCases)
                 {
-                    selected[0].GetComponent<Switcher>().SpreadOut(rootData, false);
+                    selected[0].GetComponent<Switcher>().Unpack(rootData, false);
                 }
                 Selection.activeGameObject = selected[0];
             } else
@@ -92,20 +92,20 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/UI/Switcher/Spread Out", true, 102)]
-        public static bool IsSpreadOut()
+        [MenuItem("GameObject/UI/Switcher/Unpack", true, 102)]
+        public static bool IsUnpack()
         {
             return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>() != null;
         }
 
 
-        [MenuItem("GameObject/UI/Switcher/Spread Out %#&S", false, 102)]
-        public static void SpreadOut()
+        [MenuItem("GameObject/UI/Switcher/Unpack %#&S", false, 102)]
+        public static void Unpack()
         {
             var switcher = Selection.activeGameObject.GetComponent<Switcher>();
             if (switcher != null)
             {
-                switcher.SpreadOut();
+                switcher.Unpack();
             }
             else
             {
@@ -133,10 +133,10 @@ namespace mulova.switcher
                 switchers[0].Merge(switchers[i]);
             }
             EditorUtil.SetDirty(switchers[0]);
-            Selection.objects = new[] { selected[0] };
+            Selection.objects = new Object[] { selected[0] };
         }
 
-        public static bool CreateSwitcher(List<GameObject> roots, bool extractRootDiff)
+        public static bool Pack(List<GameObject> roots, bool extractRootDiff)
         {
             var duplicates = DiffExtractor.GetDuplicateSiblingNames(roots);
             if (duplicates.Count > 0)

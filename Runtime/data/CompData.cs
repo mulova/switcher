@@ -11,6 +11,7 @@ namespace mulova.switcher
     using UnityEngine;
     using UnityEngine.Events;
     using IList = System.Collections.IList;
+    using Object = UnityEngine.Object;
 
     [Serializable]
     public abstract class CompData
@@ -29,10 +30,7 @@ namespace mulova.switcher
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
-                if (m.HasChanged(this))
-                {
-                    SetValue(m, c);
-                }
+                ApplyValue(m, c);
             }
             OnApplyEnd();
         }
@@ -48,7 +46,7 @@ namespace mulova.switcher
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
-                if (m.HasChanged(this))
+                if (m.IsChanged(this))
                 {
                     var v1 = GetValueFrom(m, target);
                     var v2 = GetValue(m);
@@ -76,18 +74,16 @@ namespace mulova.switcher
 
         public virtual object GetValueFrom(MemberControl m, Component c) => m.GetValue(c);
 
-        public virtual void SetValue(MemberControl m, Component c, object value)
+        public virtual void ApplyValue(MemberControl m, Component c, object value)
         {
-            if (isActiveAndEnabled || m.name == nameof(Behaviour.enabled))
+            if (m.IsChanged(this))
+            // if (isActiveAndEnabled || m.name == nameof(Behaviour.enabled))
             {
                 m.Apply(c, value);  
             }
         } 
 
-        public void SetValue(MemberControl m, Component c)
-        {
-            SetValue(m, c, GetValue(m));
-        }
+        public void ApplyValue(MemberControl m, Component c) => ApplyValue(m, c, GetValue(m));
 
         public void Collect(Component src, bool changedOnly)
         {
@@ -95,9 +91,9 @@ namespace mulova.switcher
             var members = ListAttributedMembers();
             foreach (var m in members)
             {
-                if (!changedOnly || m.HasChanged(this))
+                if (!changedOnly || m.IsChanged(this))
                 {
-                    if (IsCollectable(m))
+                    if (IsCollectable(src, m))
                     {
                         try
                         {
@@ -112,15 +108,27 @@ namespace mulova.switcher
                     }
                 }
             }
-
-            isActiveAndEnabled = src switch
-            {
-                Behaviour b => b.gameObject.activeInHierarchy,
-                _ => src.gameObject.activeInHierarchy
-            };
         }
 
-        protected virtual bool IsCollectable(MemberControl m) => true;
+        public virtual bool IsCollectable(Component c, MemberControl m)
+        {
+            if (m.name == "enabled")
+            {
+                return true;
+            }
+            else if (c != null)
+            {
+                return c switch
+                {
+                    Behaviour b => b.isActiveAndEnabled,
+                    _ => c.gameObject.activeInHierarchy
+                };
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         public virtual void Postprocess(IReadOnlyList<CompData> list) { }
 
@@ -144,6 +152,44 @@ namespace mulova.switcher
             }
             return true;
         }
+        
+        public virtual bool MemberEquals(CompData that, MemberControl m)
+        {
+            var v0 = GetValue(m);
+            if (m.IsChanged(this) ^ m.IsChanged(that))
+            {
+                return false;
+            }
+            if (that.target is Behaviour b && !b.isActiveAndEnabled && m.name != "enabled")
+            {
+                return true;
+            }
+            var vi = that.GetValue(m);
+            if (v0 == null ^ vi == null)
+            {
+                return false;
+            } else if (v0 is Object o0 && vi is Object oi)
+            {
+                if (o0 == null && oi == null)
+                {
+                } else if (o0 != oi)
+                {
+                    return false;
+                }
+            }
+            else if (v0 != null && !MemberEquals(m, v0, vi))
+            {
+                if (m.isReference && v0.GetType() == vi.GetType())
+                {
+                    return ((Component)v0).transform.IsHierarchyPair(((Component)vi).transform);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public bool MemberEquals(MemberControl m, object v0, object v1)
         {
@@ -153,7 +199,7 @@ namespace mulova.switcher
                 {
                     var l0 = v0 as IList;
                     var l1 = v1 as IList;
-                    if (l0 != l1)
+                    if (!ReferenceEquals(l0, l1))
                     {
                         if (l0 == null || l1 == null)
                         {
@@ -185,6 +231,15 @@ namespace mulova.switcher
 
         public virtual bool ValueEquals(object v0, object v1)
         {
+            if (v0 == v1)
+            {
+                return true;
+            }
+
+            if (v0 == null)
+            {
+                return false;
+            }
             switch (v0)
             {
                 case float f0:
@@ -232,9 +287,9 @@ namespace mulova.switcher
         /// </summary>
         /// <param name="data"></param>
         /// <returns>true if any of the CompData</returns>
-        public List<MemberControl> ListChangedMembers() => ListAttributedMembers().FindAll(m => m.HasChanged(this));
+        public List<MemberControl> ListChangedMembers() => ListAttributedMembers().FindAll(m => m.IsChanged(this));
 
-        public List<MemberControl> ListUnchangedMembers() => ListAttributedMembers().FindAll(m => !m.HasChanged(this));
+        public List<MemberControl> ListUnchangedMembers() => ListAttributedMembers().FindAll(m => !m.IsChanged(this));
 
         /// <summary>
         /// Use when the value setting order is important like RectTransform
@@ -274,7 +329,7 @@ namespace mulova.switcher
                                 var match = c.GetHierarchyPair(rc, r0);
                                 if (match != null)
                                 {
-                                    SetValue(m, comp, match);
+                                    m.Apply(comp, match);
                                 }
                             }
                             else if (val is GameObject o)
@@ -283,7 +338,7 @@ namespace mulova.switcher
                                 var match = t.GetHierarchyPair(rc, r0);
                                 if (match != null)
                                 {
-                                    SetValue(m, comp, match.gameObject);
+                                    m.Apply(comp, match.gameObject);
                                 }
                             } else
                             {
@@ -309,7 +364,7 @@ namespace mulova.switcher
 
         protected virtual void ProcessMatchingRefs(object val, object val0, Transform rc, Transform r0)
         {
-            if (typeof(UnityEventBase).IsAssignableFrom(val.GetType()))
+            if (val != null && typeof(UnityEventBase).IsAssignableFrom(val.GetType()))
             {
                 var e = val as UnityEventBase;
                 e.ReplaceMatchingTarget(rc, r0);

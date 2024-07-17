@@ -87,84 +87,78 @@ namespace mulova.switcher
                         }
                         
                         EditorGUI.indentLevel++;
-                        switch (d)
+                        var members = switcher.ListChangedMembers(dataIndex);
+                        if (members.Count > 0)
                         {
-                            case CompData c:
-                                var members = c.ListChangedMembers();
-                                if (members.Count > 0)
+                            foreach (var m in members)
+                            {
+                                using (new EnableScope(m.IsChanged(d)))
+                                // using (new EnableScope(switcher.IsChangeable(set, c, m)))
                                 {
-                                    foreach (var m in members)
+                                    using (new EditorGUILayout.HorizontalScope())
                                     {
-                                        using (var scope = new EnableScope(switcher.IsChangeable(set, c, m)))
+                                        var p = FindMemberProperty(so, caseIndex, dataIndex, m.name);
+                                        EditorGUILayout.PropertyField(p);
+                                        using (new EnableScope(GUI.enabled || (caseIndex == 0 && d.target == null)))
                                         {
-                                            using (new EditorGUILayout.HorizontalScope())
+                                            if (GUILayout.Button("-", GUILayout.Width(20)))
                                             {
-                                                var p = FindMemberProperty(so, caseIndex, dataIndex, m.name);
-                                                EditorGUILayout.PropertyField(p);
-                                                if (GUILayout.Button("-", GUILayout.Width(20)))
+                                                if (members.Count == 1 && deleteIndex < 0)
                                                 {
-                                                    if (members.Count == 1 && deleteIndex < 0)
+                                                    deleteIndex = dataIndex;
+                                                }
+                                                else
+                                                {
+                                                    for (int s = 0; s < switcher.cases.Count; ++s)
                                                     {
-                                                        deleteIndex = dataIndex;
-                                                    }
-                                                    else
-                                                    {
-                                                        for (int s = 0; s < switcher.cases.Count; ++s)
+                                                        var isSet = FindMemberProperty(so, s, dataIndex, m.name+MemberControl.MOD_SUFFIX);
+                                                        if (isSet != null)
                                                         {
-                                                            var isSet = FindMemberProperty(so, s, dataIndex, m.name+MemberControl.MOD_SUFFIX);
-                                                            if (isSet != null)
-                                                            {
-                                                                isSet.boolValue = false;
-                                                            }
+                                                            isSet.boolValue = false;
                                                         }
                                                     }
                                                 }
                                             }
                                         }
+
                                     }
-                                } else
-                                {
-                                    deleteIndex = dataIndex;
                                 }
-                                if (caseIndex == 0 && win.isAdd)
+                            }
+                        } else
+                        {
+                            deleteIndex = dataIndex;
+                        }
+                        if (win.isAdd)
+                        {
+                            var unchangedMembers = new List<MemberControl>(d.ListUnchangedMembers());
+                            if (unchangedMembers.Count > 0)
+                            {
+                                unchangedMembers.Sort((a,b)=> a.name.CompareTo(b.name));
+                                var names = unchangedMembers.ConvertAll(m => m.name).ToArray();
+                                while (addIndex.Count <= dataIndex)
                                 {
-                                    members = c.ListUnchangedMembers();
-                                    if (members.Count > 0)
+                                    addIndex.Add(0);
+                                }
+                                addIndex[dataIndex] = Mathf.Clamp(addIndex[dataIndex], 0, names.Length - 1);
+                                using (new EditorGUILayout.HorizontalScope())
+                                {
+                                    addIndex[dataIndex] = EditorGUILayout.Popup(addIndex[dataIndex], names);
+                                    if (GUILayout.Button("+", GUILayout.Width(20)))
                                     {
-                                        members.Sort((a,b)=> a.name.CompareTo(b.name));
-                                        var names = members.ConvertAll(m => m.name).ToArray();
-                                        while (addIndex.Count <= dataIndex)
+                                        var m = unchangedMembers[addIndex[dataIndex]];
+                                        var p0 = FindMemberProperty(so, 0, dataIndex, m.name);
+                                        var val = p0.GetValue();
+                                        Undo.RecordObject(switcher, "Add " + m.ToString());
+                                        var isSet = FindMemberProperty(so, caseIndex, dataIndex, m.name + MemberControl.MOD_SUFFIX);
+                                        if (isSet != null)
                                         {
-                                            addIndex.Add(0);
+                                            isSet.boolValue = true;
                                         }
-                                        addIndex[dataIndex] = Mathf.Clamp(addIndex[dataIndex], 0, names.Length - 1);
-                                        using (new EditorGUILayout.HorizontalScope())
-                                        {
-                                            addIndex[dataIndex] = EditorGUILayout.Popup(addIndex[dataIndex], names);
-                                            if (GUILayout.Button("+", GUILayout.Width(20)))
-                                            {
-                                                var m = members[addIndex[dataIndex]];
-                                                var p0 = FindMemberProperty(so, 0, dataIndex, m.name);
-                                                var val = p0.GetValue();
-                                                Undo.RecordObject(switcher, "Add " + m.ToString());
-                                                for (int s = 0; s < switcher.cases.Count; ++s)
-                                                {
-                                                    var isSet = FindMemberProperty(so, s, dataIndex, m.name + MemberControl.MOD_SUFFIX);
-                                                    if (isSet != null)
-                                                    {
-                                                        isSet.boolValue = true;
-                                                    }
-                                                    var p = FindMemberProperty(so, s, dataIndex, m.name);
-                                                    p.SetValue(val);
-                                                }
-                                            }
-                                        }
+                                        var p = FindMemberProperty(so, caseIndex, dataIndex, m.name);
+                                        p.SetValue(val);
                                     }
                                 }
-                                break;
-                            default:
-                                Debug.LogWarning("Not implemented " + d.GetType());
-                                break;
+                            }
                         }
                         EditorGUI.indentLevel--;
                     } else

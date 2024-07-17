@@ -21,7 +21,8 @@ namespace mulova.switcher
 
         protected override void OnApplyEnd()
         {
-            if (Application.isPlaying)
+            var play = (!playAutomatically_mod && targetCasted.playAutomatically) || (playAutomatically_mod && playAutomatically);
+            if (clip_mod && play && Application.isPlaying)
             {
                 targetCasted.Play(clip.name);
             }
