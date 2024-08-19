@@ -306,9 +306,9 @@ namespace mulova.switcher
             {
                 return;
             }
-            var bypassSwitcherTree = depth > 0 && SwitcherEditorConfig.instance.bypassNestedSwitcherTree && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
+            var bypassNestedSwitcher = depth > 0 && SwitcherEditorConfig.instance.bypassNestedSwitcherTree && current[0].TryGetComponent<Switcher>(out _);  // Transform is extracted only for the nested switcher
             Component[][] comps = null;
-            if (bypassSwitcherTree)
+            if (bypassNestedSwitcher)
             {
                 comps = current.ConvertAll(t => new Component[] { t.GetComponent<Transform>()});
             } else
@@ -346,7 +346,7 @@ namespace mulova.switcher
                 }
             }
 
-            if (!bypassSwitcherTree)
+            if (!bypassNestedSwitcher)
             {
                 // child diff
                 for (int i=0; i < current[0].GetSerializedChildCount(); ++i)

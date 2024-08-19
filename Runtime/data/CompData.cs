@@ -364,9 +364,8 @@ namespace mulova.switcher
 
         protected virtual void ProcessMatchingRefs(object val, object val0, Transform rc, Transform r0)
         {
-            if (val != null && typeof(UnityEventBase).IsAssignableFrom(val.GetType()))
+            if (val is UnityEventBase e)
             {
-                var e = val as UnityEventBase;
                 e.ReplaceMatchingTarget(rc, r0);
             }
         }

@@ -22,16 +22,22 @@ namespace mulova.switcher
             }
         }
 
-        [MenuItem("GameObject/UI/Switcher/Pack", true, 101)]
-        public static bool IsPack()
+        [MenuItem("GameObject/UI/Switcher/Pack Or Unpack", true, 101)]
+        public static bool IsPackOrUnpack()
         {
-            return Selection.gameObjects.Length > 1;
+            return Selection.gameObjects.Length > 1 || (Selection.gameObjects.Length == 1 && Selection.activeGameObject.TryGetComponent<Switcher>(out var s));
         }
 
-        [MenuItem("GameObject/UI/Switcher/Pack %&S", false, 101)]
-        public static void Pack()
+        [MenuItem("GameObject/UI/Switcher/Pack Or Unpack %&S", false, 101)]
+        public static void PackOrUnpack()
         {
-            Pack(false);
+            if (Selection.gameObjects.Length > 1)
+            {
+                Pack(false);
+            } else if (Selection.gameObjects.Length == 1 && Selection.activeGameObject.TryGetComponent<Switcher>(out var s))
+            {
+                Unpack();
+            }
         }
 
         [MenuItem("GameObject/UI/Switcher/Pack with root transform", true, 102)]
@@ -59,16 +65,6 @@ namespace mulova.switcher
                 return;
             }
             runFrame = Time.frameCount;
-            /*
-            foreach (var o in selected)
-            {
-                if (PrefabUtility.IsPartOfPrefabInstance(o))
-                {
-                    Debug.LogError("Prefab can be processed under the prefab mode only");
-                    return;
-                }
-            }
-            */
 
             var rootData = new List<RootData>();
             if (Pack(selected, extractRootDiff))
@@ -99,7 +95,7 @@ namespace mulova.switcher
         }
 
 
-        [MenuItem("GameObject/UI/Switcher/Unpack %#&S", false, 102)]
+        [MenuItem("GameObject/UI/Switcher/Unpack", false, 102)]
         public static void Unpack()
         {
             var switcher = Selection.activeGameObject.GetComponent<Switcher>();
@@ -136,31 +132,66 @@ namespace mulova.switcher
             Selection.objects = new Object[] { selected[0] };
         }
 
-        public static bool Pack(List<GameObject> roots, bool extractRootDiff)
+        private static bool Pack(List<GameObject> roots, bool extractRootDiff)
         {
             var duplicates = DiffExtractor.GetDuplicateSiblingNames(roots);
             if (duplicates.Count > 0)
             {
-                Debug.LogError("Duplicate sibling names: " + string.Join(",", duplicates));
+                Debug.LogError("Duplicate sibling names are not allowed: " + string.Join(",", duplicates));
                 return false;
             }
             else
             {
+                Undo.SetCurrentGroupName("Switcher.Pack");
+                var undoGroup = Undo.GetCurrentGroup();
+                roots.ForEach(r=> Undo.RegisterFullObjectHierarchyUndo(r, r.name));
                 var rootTrans = roots.ConvertAll(o => o.transform);
                 DiffExtractor.CreateMissingChildren(rootTrans, rootTrans);
                 DiffExtractor.CreateMissingComponent(rootTrans, rootTrans);
-                for (int i=1; i < rootTrans.Count; ++i)
-                {
-                    DiffExtractor.ReplaceRefs(rootTrans[i], rootTrans[0], rootTrans[i], rootTrans[0]);
-                }
                 if (DiffExtractor.IsComponentMatch(rootTrans))
                 {
-                    Undo.RecordObjects(roots.ToArray(), "Diff");
                     MakeRootsActive(roots);
-                    ExtractDiff(roots, extractRootDiff);
+                    for (var i=1; i < rootTrans.Count; ++i)
+                    {
+                        DiffExtractor.ReplaceRefs(rootTrans[i], rootTrans[0], rootTrans[i], rootTrans[0]);
+                    }
+                    
+                    // just set data for the first object
+                    var root0 = roots[0];
+                    var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
+
+                    var switcher = root0.GetComponent<Switcher>();
+                    var actions = switcher.cases.ConvertAll(c => c.action);
+                    string name0 = null;
+                    if (switcher != null)
+                    {
+                        if (switcher.cases.Count > 0)
+                        {
+                            name0 = switcher.cases[0].name;
+                        }
+                        switcher.Clear();
+                    } else
+                    {
+                        switcher = root0.AddComponent<Switcher>();
+                    }
+
+                    for (var i = 0; i < roots.Count; ++i)
+                    {
+                        var c = new Case
+                        {
+                            name = i == 0 && name0 != null? name0: roots[i].name,
+                            data = diffs[i],
+                            action = actions[i]
+                        };
+                        switcher.cases.Add(c);
+                    }
+                    EditorUtility.SetDirty(switcher);
+                    Undo.CollapseUndoOperations(undoGroup);
+                    //diffList.serializedProperty.ClearArray();
                     return true;
                 } else
                 {
+                    roots.ForEach(Undo.ClearUndo);
                     return false;
                 }
             }
@@ -175,39 +206,6 @@ namespace mulova.switcher
                     }
                 }
             }
-        }
-
-        private static void ExtractDiff(List<GameObject> roots, bool extractRootDiff)
-        {
-            // just set data for the first object
-            var root0 = roots[0];
-            var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
-            var tDiffs = DiffExtractor.FindAll<TransformData>(diffs);
-
-            var switcher = root0.GetComponent<Switcher>();
-            string firstId = null;
-            if (switcher != null)
-            {
-                if (switcher.cases.Count > 0)
-                {
-                    firstId = switcher.cases[0].name;
-                }
-                switcher.Clear();
-            } else
-            {
-                switcher = root0.AddComponent<Switcher>();
-                Undo.RegisterCreatedObjectUndo(switcher, root0.name);
-            }
-
-            for (int i = 0; i < roots.Count; ++i)
-            {
-                var c = new Case();
-                c.name = i == 0 && firstId != null? firstId: roots[i].name;
-                c.data = diffs[i];
-                switcher.cases.Add(c);
-            }
-            EditorUtility.SetDirty(switcher);
-            //diffList.serializedProperty.ClearArray();
         }
     }
 }

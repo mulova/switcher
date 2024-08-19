@@ -20,23 +20,23 @@ namespace mulova.switcher
 
         protected override void ProcessMatchingRefs(object val, object val0, Transform rc, Transform r0)
         {
-            if (val is Case that)
+            if (val is Case casen)
             {
-                if (cases[0].data.Count != that.data.Count)
+                var case0 = val0 as Case;
+                if (cases[0].data.Count != casen.data.Count)
                 {
                     Debug.LogError($"Case data count mismatch between {rc.name} and {r0.name}");
                 }
 
                 for (var id = 0; id < cases[0].data.Count; ++id)
                 {
-                    if (cases[0].data[id].srcType != that.data[id].srcType)
+                    if (cases[0].data[id].srcType != casen.data[id].srcType)
                     {
                         Debug.LogError($"data type mismatch between {rc.name}({id}) and {r0.name}({id})");
                         break;
                     }
-
-                    var case0 = val0 as Case;
-                    that.data[id].target = case0.data[id].target;
+                    casen.data[id].target = case0.data[id].target;
+                    casen.action.ReplaceMatchingTarget(rc, r0);
                 }
             }
             else
