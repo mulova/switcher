@@ -196,6 +196,53 @@ namespace mulova.switcher
 
         public override void OnFooterGUI()
         {
+            var dragged = GetDraggedComponent();
+            if (dragged != null && switcher.cases[0].GetCompData(dragged) == null)
+            {
+                var so = win.serializedObject;
+                so.Update();
+                for (var i = 0; i < switcher.cases.Count; ++i)
+                {
+                    var inst = CompDataFactory.instance.GetComponentData(dragged);
+                    if (inst != null)
+                    {
+                        var m = inst.GetMember("enabled");
+                        m.SetChanged(inst, true);
+                        var c = switcher.cases[i];
+                        c.data.Add(inst);
+                    }
+                }
+                so.ApplyModifiedProperties();
+            }
+            
+            Component GetDraggedComponent()
+            {
+                var evt = Event.current;      //현재 이벤트 얻어오기.
+                switch (evt.type)
+                {
+                    case EventType.DragExited:
+                    case EventType.DragPerform:
+                    {
+                        if (win != EditorWindow.mouseOverWindow)
+                        {
+                            break;
+                        }
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                        DragAndDrop.AcceptDrag();   // 드래그앤 드랍을 허용함.
+                        foreach (var draggedObj in DragAndDrop.objectReferences)    // objectReferences: 드래그한 오브젝트들의 레퍼런스
+                        {
+                            var c = draggedObj as Component;
+                            if (c)
+                            {
+                                Event.current.Use();
+                                return c;
+                            }
+                        }
+                    }
+                    break;
+                }
+                return null;
+            }
         }
 
         public override void OnEnable()

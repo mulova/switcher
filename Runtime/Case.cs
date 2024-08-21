@@ -51,7 +51,9 @@ namespace mulova.switcher
         }
 
         public T GetCompData<T>(GameObject o) where T:CompData => data.Find(d => d?.target != null && d.target.gameObject == o && d is T) as T;
-        
+
+        public CompData GetCompData(Component comp) => data.Find(d => d.target == comp);
+
         public object Clone()
         {
             Case c = new Case();
