@@ -161,7 +161,7 @@ namespace mulova.switcher
                     var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
 
                     var switcher = root0.GetComponent<Switcher>();
-                    var actions = switcher.cases.ConvertAll(c => c.action);
+                    var actions = switcher?.cases.ConvertAll(c => c.action);
                     string name0 = null;
                     if (switcher != null)
                     {
@@ -181,7 +181,7 @@ namespace mulova.switcher
                         {
                             name = i == 0 && name0 != null? name0: roots[i].name,
                             data = diffs[i],
-                            action = actions[i]
+                            action = actions?[i]
                         };
                         switcher.cases.Add(c);
                     }
