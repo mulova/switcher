@@ -181,7 +181,7 @@ namespace mulova.switcher
                         {
                             name = i == 0 && name0 != null? name0: roots[i].name,
                             data = diffs[i],
-                            action = actions?[i]
+                            action = actions != null && actions.Count > i? actions[i] : null
                         };
                         switcher.cases.Add(c);
                     }
