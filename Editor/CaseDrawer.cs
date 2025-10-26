@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using mulova.switcher.foundation;
 using Object = UnityEngine.Object;
 
 namespace mulova.switcher

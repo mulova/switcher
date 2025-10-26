@@ -3,6 +3,9 @@
 // License: The MIT License ( http://opensource.org/licenses/MIT )
 // Copyright mulova@gmail.com
 //----------------------------------------------
+
+using mulova.switcher.foundation;
+
 namespace mulova.switcher
 {
     using System.Collections.Generic;

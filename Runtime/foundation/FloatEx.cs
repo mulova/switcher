@@ -4,7 +4,7 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
-namespace mulova.switcher
+namespace mulova.switcher.foundation
 {
     public static class FloatEx
     {

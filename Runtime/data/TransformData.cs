@@ -5,6 +5,7 @@
 //----------------------------------------------
 
 using System.Collections.Generic;
+using mulova.switcher.foundation;
 
 namespace mulova.switcher
 {

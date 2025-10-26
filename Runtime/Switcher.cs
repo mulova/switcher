@@ -5,6 +5,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
+using mulova.switcher.foundation;
+
 namespace mulova.switcher
 {
     using System;

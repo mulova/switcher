@@ -4,7 +4,8 @@
 // Copyright mulova@gmail.com
 //----------------------------------------------
 
-namespace mulova.switcher
+
+namespace mulova.switcher.foundation
 {
     using System;
     using UnityEditor;
