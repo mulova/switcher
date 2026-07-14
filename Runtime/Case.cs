@@ -60,6 +60,7 @@ namespace mulova.switcher
             Case c = new Case();
             c.name = this.name;
             c.data = new List<CompData>(data);
+            c.action = action;
             return c;
         }
 

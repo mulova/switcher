@@ -21,17 +21,18 @@ namespace mulova.switcher
         {
             get
             {
-                if (_processes == null)
+                if (_processes != null)
                 {
-                    _processes = new List<AssetVerificationProcess>();
+                    return _processes;
                 }
-    
-                foreach (var t in typeof(AssetVerificationProcess).FindTypes())
+
+                _processes = new List<AssetVerificationProcess>();
+
+                foreach (var t in TypeCache.GetTypesDerivedFrom<AssetVerificationProcess>())
                 {
                     if (!t.IsAbstract)
                     {
                         _processes.Add((AssetVerificationProcess)Activator.CreateInstance(t));
-                        
                     }
                 }
                 return _processes;

@@ -37,7 +37,15 @@ namespace mulova.switcher
                 Pack(false);
             } else if (Selection.gameObjects.Length == 1 && Selection.activeGameObject.TryGetComponent<Switcher>(out var s))
             {
-                Unpack();
+                var switcher = Selection.activeGameObject.GetComponent<Switcher>();
+                if (switcher != null)
+                {
+                    switcher.Unpack();
+                }
+                else
+                {
+                    Debug.Log("No switcher selected");
+                }
             }
         }
 
@@ -56,7 +64,7 @@ namespace mulova.switcher
         private static int runFrame;
         public static void Pack(bool extractRootDiff)
         {
-            var selected = sortedSelection;
+            var selected = FilterTopLevelSelection(sortedSelection);
             if (selected == null || selected.Count == 1)
             {
                 return;
@@ -86,27 +94,6 @@ namespace mulova.switcher
             } else
             {
                 EditorUtility.DisplayDialog("Error", "Check out logs for more detail", "OK");
-            }
-        }
-
-        [MenuItem("GameObject/UI/Switcher/Unpack", true, 102)]
-        public static bool IsUnpack()
-        {
-            return Selection.activeGameObject != null && Selection.activeGameObject.GetComponent<Switcher>() != null;
-        }
-
-
-        [MenuItem("GameObject/UI/Switcher/Unpack", false, 102)]
-        public static void Unpack()
-        {
-            var switcher = Selection.activeGameObject.GetComponent<Switcher>();
-            if (switcher != null)
-            {
-                switcher.Unpack();
-            }
-            else
-            {
-                Debug.Log("No switcher selected");
             }
         }
 
@@ -161,32 +148,43 @@ namespace mulova.switcher
                     var root0 = roots[0];
                     var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
 
-                    var switcher = root0.GetComponent<Switcher>();
-                    var actions = switcher?.cases.ConvertAll(c => c.action);
-                    string name0 = null;
-                    if (switcher != null)
+                    var switcher0 = root0.GetComponent<Switcher>();
+                    if (switcher0 == null)
                     {
-                        if (switcher.cases.Count > 0)
-                        {
-                            name0 = switcher.cases[0].name;
-                        }
-                        switcher.Clear();
-                    } else
-                    {
-                        switcher = root0.AddComponent<Switcher>();
+                        switcher0 = root0.AddComponent<Switcher>();
                     }
 
                     for (var i = 0; i < roots.Count; ++i)
                     {
+                        var caseName = roots[i].name;
+                        SwitcherEvent action = null;
+                        var sourceSwitcher = roots[i].GetComponent<Switcher>();
+                        if (sourceSwitcher != null)
+                        {
+                            if (sourceSwitcher.cases.Count > i)
+                            {
+                                var casei = sourceSwitcher.cases[i];
+                                action = casei.action;
+                            }
+                            if (action != null && roots[i].transform != root0.transform)
+                            {
+                                action.ReplaceMatchingTarget(roots[i].transform, root0.transform);
+                            }
+                        }
+
                         var c = new Case
                         {
-                            name = i == 0 && name0 != null? name0: roots[i].name,
+                            name = caseName,
                             data = diffs[i],
-                            action = actions != null && actions.Count > i? actions[i] : null
+                            action = action
                         };
-                        switcher.cases.Add(c);
+                        if (i == 0)
+                        {
+                            switcher0.Clear();
+                        }
+                        switcher0.cases.Add(c);
                     }
-                    EditorUtility.SetDirty(switcher);
+                    EditorUtility.SetDirty(switcher0);
                     Undo.CollapseUndoOperations(undoGroup);
                     //diffList.serializedProperty.ClearArray();
                     return true;
@@ -207,6 +205,44 @@ namespace mulova.switcher
                     }
                 }
             }
+        }
+
+        private static List<GameObject> FilterTopLevelSelection(IReadOnlyList<GameObject> selected)
+        {
+            if (selected == null || selected.Count == 0)
+            {
+                return new List<GameObject>();
+            }
+            var unique = new List<GameObject>(selected.Count);
+            var set = new HashSet<GameObject>();
+            foreach (var go in selected)
+            {
+                if (go != null && set.Add(go))
+                {
+                    unique.Add(go);
+                }
+            }
+            var filtered = new List<GameObject>(unique.Count);
+            foreach (var go in unique)
+            {
+                var t = go.transform.parent;
+                var isChildOfSelection = false;
+                while (t != null)
+                {
+                    if (set.Contains(t.gameObject))
+                    {
+                        isChildOfSelection = true;
+                        break;
+                    }
+                    t = t.parent;
+                }
+                if (!isChildOfSelection)
+                {
+                    filtered.Add(go);
+                }
+            }
+            filtered.Sort((a, b) => a.transform.GetSiblingIndex() - b.transform.GetSiblingIndex());
+            return filtered;
         }
     }
 }
