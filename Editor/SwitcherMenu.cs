@@ -148,10 +148,18 @@ namespace mulova.switcher
                     var root0 = roots[0];
                     var diffs = DiffExtractor.CreateDiff(roots.ToArray(), extractRootDiff);
 
-                    var switcher0 = root0.GetComponent<Switcher>();
-                    if (switcher0 == null)
+                    string name0 = null;
+                    var switcher = root0.GetComponent<Switcher>();
+                    if (switcher != null)
                     {
-                        switcher0 = root0.AddComponent<Switcher>();
+                        if (switcher.cases.Count > 0)
+                        {
+                            name0 = switcher.cases[0].name;
+                        }
+                        switcher.Clear();
+                    } else
+                    {
+                        switcher = root0.AddComponent<Switcher>();
                     }
 
                     for (var i = 0; i < roots.Count; ++i)
@@ -174,17 +182,17 @@ namespace mulova.switcher
 
                         var c = new Case
                         {
-                            name = caseName,
+                            name = i == 0 && name0 != null? name0: roots[i].name,
                             data = diffs[i],
                             action = action
                         };
                         if (i == 0)
                         {
-                            switcher0.Clear();
+                            switcher.Clear();
                         }
-                        switcher0.cases.Add(c);
+                        switcher.cases.Add(c);
                     }
-                    EditorUtility.SetDirty(switcher0);
+                    EditorUtility.SetDirty(switcher);
                     Undo.CollapseUndoOperations(undoGroup);
                     //diffList.serializedProperty.ClearArray();
                     return true;
